@@ -2,6 +2,9 @@
 GNURadio block with more control over how files are played.  Files can be started with an initial delay before starting to output data 
 (output 0's until the timer is hit), played with delays in between (output 0's in between), or played once then output zero's rather than just returning no samples.
 
+These can all be useful if you're trying to combine multiple sample files into a single larger signal with different intervals or trying to do 
+blind signal analysis and decoding where the standard file source repeat option causes signal discontinuities when it restarts.
+ 
 ## Building
 Build is pretty standard:
 
