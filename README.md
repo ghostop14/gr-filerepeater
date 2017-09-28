@@ -1,7 +1,6 @@
 # gr-filerepeater
-GNURadio block to play back files with delays between replays and/or limited replay counts.
-
-This block is based on the standard gnuradio File Source block with replay enhancements.
+GNURadio block with more control over how files are played.  Files can be started with an initial delay before starting to output data 
+(output 0's until the timer is hit), played with delays in between (output 0's in between), or played once then output zero's rather than just returning no samples.
 
 ## Building
 Build is pretty standard:
@@ -19,8 +18,6 @@ make install
 ldconfig
 
 ## Parameters
-GNURadio block with more control over how files are played.  Files can be started with an initial delay before starting to output data 
-(output 0's until the timer is hit), played with delays in between (output 0's in between), or played once then output zero's rather than just returning no samples.
 
 Delay first start (sec): float delay in seconds (can be fractional) before the file data stream is started.  Will output zeros until this delay is hit.
 
