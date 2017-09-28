@@ -1,0 +1,265 @@
+/* -*- c++ -*- */
+/* 
+ * Copyright 2017 ghostop14.
+ * 
+ * This is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3, or (at your option)
+ * any later version.
+ * 
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this software; see the file COPYING.  If not, write to
+ * the Free Software Foundation, Inc., 51 Franklin Street,
+ * Boston, MA 02110-1301, USA.
+ */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <gnuradio/io_signature.h>
+#include "file_repeater_ex_impl.h"
+
+#include <gnuradio/thread/thread.h>
+#include <cstdio>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdexcept>
+#include <stdio.h>
+#include <pmt/pmt.h>
+
+// win32 (mingw/msvc) specific
+#ifdef HAVE_IO_H
+#include <io.h>
+#endif
+#ifdef O_BINARY
+#define	OUR_O_BINARY O_BINARY
+#else
+#define	OUR_O_BINARY 0
+#endif
+// should be handled via configure
+#ifdef O_LARGEFILE
+#define	OUR_O_LARGEFILE	O_LARGEFILE
+#else
+#define	OUR_O_LARGEFILE 0
+#endif
+
+namespace gr {
+  namespace filerepeater {
+
+  file_repeater_ex::sptr file_repeater_ex::make(size_t itemsize, const char *filename, float delayFirstStartSec, bool repeat, int repeat_delay,int repeat_times)
+  {
+    return gnuradio::get_initial_sptr
+      (new file_repeater_ex_impl(itemsize, filename, delayFirstStartSec, repeat, repeat_delay,repeat_times));
+  }
+
+file_repeater_ex_impl::file_repeater_ex_impl(size_t itemsize, const char *filename, float delayFirstStartSec, bool repeat, int repeat_delay,int repeat_times)
+: sync_block("filerepeater",
+			io_signature::make(0, 0, 0),
+			io_signature::make(1, 1, itemsize)),
+	d_itemsize(itemsize), d_fp(0), d_new_fp(0), d_repeat(repeat),d_repeat_delay(repeat_delay),d_repeat_times(repeat_times),
+	d_updated(false), d_delayFirstStart(delayFirstStartSec),bFirstWorkCall(true)
+{
+		if (d_delayFirstStart > 0.0) {
+		  bDelayingFirst = true;
+		}
+
+		open(filename, repeat,repeat_delay,repeat_times);
+		do_update();
+}
+
+  file_repeater_ex_impl::~file_repeater_ex_impl()
+  {
+    if(d_fp)
+      fclose ((FILE*)d_fp);
+    if(d_new_fp)
+      fclose ((FILE*)d_new_fp);
+  }
+
+  bool
+  file_repeater_ex_impl::seek(long seek_point, int whence)
+  {
+    return fseek((FILE*)d_fp, seek_point *d_itemsize, whence) == 0;
+  }
+
+
+  void
+  file_repeater_ex_impl::open(const char *filename, bool repeat, int repeat_delay,int repeat_times)
+  {
+    // obtain exclusive access for duration of this function
+    gr::thread::scoped_lock lock(fp_mutex);
+
+    int fd;
+
+    // we use "open" to use to the O_LARGEFILE flag
+    if((fd = ::open(filename, O_RDONLY | OUR_O_LARGEFILE | OUR_O_BINARY)) < 0) {
+      perror(filename);
+      throw std::runtime_error("can't open file");
+    }
+
+    if(d_new_fp) {
+      fclose(d_new_fp);
+      d_new_fp = 0;
+    }
+
+    if((d_new_fp = fdopen (fd, "rb")) == NULL) {
+      perror(filename);
+      ::close(fd);	// don't leak file descriptor if fdopen fails
+      throw std::runtime_error("can't open file");
+    }
+
+    d_updated = true;
+    d_repeat = repeat;
+    d_repeat_delay = repeat_delay;
+    d_repeat_times = repeat_times;
+  }
+
+  void
+  file_repeater_ex_impl::close()
+  {
+    // obtain exclusive access for duration of this function
+    gr::thread::scoped_lock lock(fp_mutex);
+
+    if(d_new_fp != NULL) {
+      fclose(d_new_fp);
+      d_new_fp = NULL;
+    }
+    d_updated = true;
+  }
+
+  void
+  file_repeater_ex_impl::do_update()
+  {
+    if(d_updated) {
+      gr::thread::scoped_lock lock(fp_mutex); // hold while in scope
+
+      if(d_fp)
+        fclose(d_fp);
+
+      d_fp = d_new_fp;    // install new file pointer
+      d_new_fp = 0;
+      d_updated = false;
+    }
+  }
+
+  int
+  file_repeater_ex_impl::work(int noutput_items,
+                         gr_vector_const_void_star &input_items,
+                         gr_vector_void_star &output_items)
+  {
+    // standard / original data out
+    char *o = (char*)output_items[0];
+
+    int i;
+    int size = noutput_items;
+
+    do_update();       // update d_fp is reqd
+    if(d_fp == NULL)
+      throw std::runtime_error("work with file not open");
+
+    gr::thread::scoped_lock lock(fp_mutex); // hold for the rest of this function
+
+    // First check if we're in our initial delay, if so, just return zero's and exit.
+	if (bFirstWorkCall && bDelayingFirst) {
+		// This sets the start clock on our first work call rather than when the flowgraph starts
+    	start = std::chrono::steady_clock::now();
+    	bFirstWorkCall = false;
+
+    	memset((void *)o,0x00,d_itemsize*noutput_items);
+    	return noutput_items;
+	}
+	else {
+		// We could be here if it's just not the first time into work.
+		if (bDelayingFirst) {
+	    	end = std::chrono::steady_clock::now();
+	    	std::chrono::duration<double> elapsed_seconds = end-start;
+
+	    	if (elapsed_seconds.count() <= d_delayFirstStart) {
+	            // I'm holding the transmit and my initial timeout hasn't expired yet.
+	        	memset((void *)o,0x00,d_itemsize*noutput_items);
+	        	return noutput_items;
+	    	}
+	    	else {
+	    		// we can release our hold
+	    		bDelayingFirst = false;
+	    		// std::cout <<"DEBUG: Exiting delay first." << std::endl;
+	    	}
+		}
+	}
+
+	if (!d_repeat && (cur_repeat_cycle > 1)) {
+		return 0;
+	}
+
+    // If we have a repeat count and we've exceeded it, just return 0's.
+    if ((d_repeat_times > 0) && (cur_repeat_cycle > d_repeat_times)) {
+      	memset((void *)o,0x00,d_itemsize*noutput_items);
+      	return noutput_items;
+    }
+
+    // check if we're in a hold-down delay between file repeats.  If so return 0's.
+    if (holdingTransmit) {
+        boost::posix_time::ptime tnow = boost::posix_time::second_clock::local_time();
+        boost::posix_time::time_duration diff = tnow - stopped_transmitting;
+
+        if (diff.total_milliseconds() <= d_repeat_delay) {
+            // I'm holding the transmit and my timeout hasn't expired yet.
+        	memset((void *)o,0x00,d_itemsize*noutput_items);
+            return noutput_items;
+        }
+    }
+
+    long itemsRead;
+
+	itemsRead = fread(o, d_itemsize, size, (FILE*)d_fp);
+
+    if (itemsRead > 0) {
+    	// we read some data
+        if (itemsRead < noutput_items) {
+        	// If we're towards the end of the file and we don't have enough data to satisfy the request, return what we have.
+        	long remaining = noutput_items - itemsRead;
+        	o += itemsRead * d_itemsize;
+        	memset((void *)o,0x00,d_itemsize * remaining);
+        	return noutput_items;
+        }
+    }
+    else {
+    	// if itemsRead = 0, then we've reached the end of the file.
+        // Check repeat times and reset the file
+    	// std::cout << "DEBUG: Reached end of file." << std::endl;
+
+        if (d_repeat_times > 0) {
+            cur_repeat_cycle += 1;
+        }
+
+    	// std::cout <<"DEBUG: Resetting file pointer" << std::endl;
+        // now we should still be repeating if we're here so reset the file.
+        // reset file
+        if(fseek ((FILE *) d_fp, 0, SEEK_SET) == -1) {
+          fprintf(stderr, "[%s] File reset / fseek failed\n", __FILE__);
+          exit(-1);
+        }
+
+        // if we're here:
+        // 1. we should be repeating
+        // 2. we should either continue repeating or we're within our cycle limit
+
+        if (d_repeat_delay > 0) {
+            stopped_transmitting = boost::posix_time::second_clock::local_time();
+            holdingTransmit = true;
+        	return 0; // let the loop read pick up on next call.
+        }
+    }
+
+    return noutput_items;
+  }
+
+  } /* namespace filerepeater */
+} /* namespace gr */
+

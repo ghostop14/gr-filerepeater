@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<!--
+###################################################
+##File Source
+###################################################
+ -->
+<block>
+	<name>Advanced File Source</name>
+	<key>filerepeater_file_repeater_ex</key>
+	<category>[FILEREPEATER]</category>
+	<import>import filerepeater</import>
+	<make>filerepeater.file_repeater_ex($type.size*$vlen, $file, $delayFirstStart,$repeat,$repeat_delay,$repeat_times)</make>
+	<callback>open($file, $repeat,$repeat_delay,$repeat_times)</callback>
+	<param>
+		<name>File</name>
+		<key>file</key>
+		<value></value>
+		<type>file_open</type>
+	</param>
+	<param>
+		<name>Output Type</name>
+		<key>type</key>
+		<type>enum</type>
+		<option>
+			<name>Complex</name>
+			<key>complex</key>
+			<opt>size:gr.sizeof_gr_complex</opt>
+		</option>
+		<option>
+			<name>Float</name>
+			<key>float</key>
+			<opt>size:gr.sizeof_float</opt>
+		</option>
+		<option>
+			<name>Int</name>
+			<key>int</key>
+			<opt>size:gr.sizeof_int</opt>
+		</option>
+		<option>
+			<name>Short</name>
+			<key>short</key>
+			<opt>size:gr.sizeof_short</opt>
+		</option>
+		<option>
+			<name>Byte</name>
+			<key>byte</key>
+			<opt>size:gr.sizeof_char</opt>
+		</option>
+	</param>
+	<param>
+		<name>Repeat</name>
+		<key>repeat</key>
+		<value>True</value>
+		<type>enum</type>
+		<option>
+			<name>Yes</name>
+			<key>True</key>
+		</option>
+		<option>
+			<name>No</name>
+			<key>False</key>
+		</option>
+	</param>
+	<param>
+		<name>Delay first start (sec)</name>
+		<key>delayFirstStart</key>
+		<value>0.0</value>
+		<type>float</type>
+	</param>
+	<param>
+		<name>ms Delay between repeats</name>
+		<key>repeat_delay</key>
+		<value>0</value>
+		<type>int</type>
+	</param>
+	<param>
+		<name>Only repeat n times</name>
+		<key>repeat_times</key>
+		<value>0</value>
+		<type>int</type>
+	</param>
+	<param>
+		<name>Vec Length</name>
+		<key>vlen</key>
+		<value>1</value>
+		<type>int</type>
+	</param>
+	<check>$vlen &gt; 0</check>
+	<check>$delayFirstStart &gt;= 0.0</check>
+	<source>
+		<name>out</name>
+		<type>$type</type>
+		<vlen>$vlen</vlen>
+	</source>
+	<doc>
+GNURadio block with more control over how files are played.  Files can be started with an initial delay before starting to output data 
+(output 0's until the timer is hit), played with delays in between (output 0's in between), or played once then output zero's rather than just returning no samples.
+
+Delay first start (sec): float delay in seconds (can be fractional) before the file data stream is started.  Will output zeros until this delay is hit.
+
+replay delay in ms: The delay between replays should be provided in milliseconds.  If this is set to 0, there will be no delay.
+	During the delay, zero's will be output (similar to a mute).  Once the delay is over the file will restart from the beginning.
+	
+replay count: Only play the file n many times.  If this is set to 0, it will play continuously.
+
+Notes: 
+
+- These can be combined, such as: Wait 2 seconds, then play the file 3 times but wait 1000 ms in between each play.
+
+- Also note that if you want a file to output 0's after the end is reached rather than just returning no samples, set repeat to "yes" and replay count to 1.
+	</doc>
+</block>
