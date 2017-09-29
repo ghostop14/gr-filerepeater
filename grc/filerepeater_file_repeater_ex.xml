@@ -9,7 +9,7 @@
 	<key>filerepeater_file_repeater_ex</key>
 	<category>[FILEREPEATER]</category>
 	<import>import filerepeater</import>
-	<make>filerepeater.file_repeater_ex($type.size*$vlen, $file, $delayFirstStart,$repeat,$repeat_delay,$repeat_times)</make>
+	<make>filerepeater.file_repeater_ex($type.size*$vlen, $file, $complexconv, $delayFirstStart,$repeat,$repeat_delay,$repeat_times)</make>
 	<callback>open($file, $repeat,$repeat_delay,$repeat_times)</callback>
 	<param>
 		<name>File</name>
@@ -25,26 +25,49 @@
 			<name>Complex</name>
 			<key>complex</key>
 			<opt>size:gr.sizeof_gr_complex</opt>
+			<opt>hide_complex_conv:</opt>
 		</option>
 		<option>
 			<name>Float</name>
 			<key>float</key>
 			<opt>size:gr.sizeof_float</opt>
+			<opt>hide_complex_conv:all</opt>
 		</option>
 		<option>
 			<name>Int</name>
 			<key>int</key>
 			<opt>size:gr.sizeof_int</opt>
+			<opt>hide_complex_conv:all</opt>
 		</option>
 		<option>
 			<name>Short</name>
 			<key>short</key>
 			<opt>size:gr.sizeof_short</opt>
+			<opt>hide_complex_conv:all</opt>
 		</option>
 		<option>
 			<name>Byte</name>
 			<key>byte</key>
 			<opt>size:gr.sizeof_char</opt>
+			<opt>hide_complex_conv:all</opt>
+		</option>
+	</param>
+	<param>
+		<name>Complex Conversion</name>
+		<key>complexconv</key>
+		<type>enum</type>
+		<hide>$type.hide_complex_conv</hide>
+		<option>
+			<name>None</name>
+			<key>0</key>
+		</option>
+		<option>
+			<name>From Signed8/HackRF</name>
+			<key>1</key>
+		</option>
+		<option>
+			<name>From Unsigned8/RTLSDR</name>
+			<key>2</key>
 		</option>
 	</param>
 	<param>
@@ -94,7 +117,8 @@
 	</source>
 	<doc>
 GNURadio block with more control over how files are played.  Files can be started with an initial delay before starting to output data 
-(output 0's until the timer is hit), played with delays in between (output 0's in between), or played once then output zero's rather than just returning no samples.
+(output 0's until the timer is hit), played with delays in between (output 0's in between), or played once then output zero's rather 
+than just returning no samples.  The block can also transparently read/convert complex data from HackRF/Signed8 or RTLSDR/Unsigned8 files.
 
 Delay first start (sec): float delay in seconds (can be fractional) before the file data stream is started.  Will output zeros until this delay is hit.
 

@@ -31,6 +31,12 @@
 #define DTYPE_SHORT 4
 #define DTYPE_BYTE 5
 
+#define CONVTYPE_NONE 0
+// HackRF
+#define CONVTYPE_SIGNED8 1
+// RTL-SDR
+#define CONVTYPE_UNSIGNED8 2
+
 namespace gr {
   namespace filerepeater {
 
@@ -48,6 +54,9 @@ namespace gr {
     	bool bDelayingFirst;
         int d_repeat_delay=0; /* in ms */
         int d_repeat_times=0; /* 0 for continued repeat, > 0 for limit */
+        int d_complex_conv;
+        bool convData;
+        char *convBuffer;
         boost::mutex fp_mutex;
         int d_dataType;
 
@@ -58,12 +67,14 @@ namespace gr {
         void do_update();
 
      public:
-      file_repeater_ex_impl(size_t itemsize, const char *filename, float delayFirstStartSec, bool repeat, int repeat_delay, int repeat_times);
+      file_repeater_ex_impl(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec, bool repeat, int repeat_delay, int repeat_times);
       ~file_repeater_ex_impl();
 
       bool seek(long seek_point, int whence);
       void open(const char *filename, bool repeat,int repeat_delay, int repeat_times);
       void close();
+
+      virtual bool stop();
 
       // Where all the action really happens
       int work(int noutput_items,

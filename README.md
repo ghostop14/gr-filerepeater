@@ -1,9 +1,11 @@
 # gr-filerepeater
 GNURadio block with more control over how files are played.  Files can be started with an initial delay before starting to output data 
-(output 0's until the timer is hit), played with delays in between (output 0's in between), or played once then output zero's rather than just returning no samples.
+(output 0's until the timer is hit), played with delays in between (output 0's in between), or played once then output zero's rather than  
+just returning no samples.  The block can also directly play signed8/HackRF and unsigned8/RTL-SDR saved IQ data and dynamically convert 
+it to native complex.
 
-These can all be useful if you're trying to combine multiple sample files into a single larger signal with different intervals or trying to do 
-blind signal analysis and decoding where the standard file source repeat option causes signal discontinuities when it restarts.
+The delay capabilities can all be useful if you're trying to combine multiple sample files into a single larger signal with different 
+intervals or trying to do blind signal analysis and decoding where the standard file source repeat option causes signal discontinuities when it restarts.
  
 ## Building
 Build is pretty standard:
@@ -21,6 +23,9 @@ make install
 ldconfig
 
 ## Parameters
+
+Complex Conversion: If you have a native HackRF (signed8) raw file or RTL-SDR (unsigned8) raw file, select the appropriate conversion type.  
+Leave as None for standard GNURadio float32-based complex recordings. 
 
 Delay first start (sec): float delay in seconds (can be fractional) before the file data stream is started.  Will output zeros until this delay is hit.
 

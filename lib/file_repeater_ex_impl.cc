@@ -53,33 +53,64 @@
 namespace gr {
   namespace filerepeater {
 
-  file_repeater_ex::sptr file_repeater_ex::make(size_t itemsize, const char *filename, float delayFirstStartSec, bool repeat, int repeat_delay,int repeat_times)
+  file_repeater_ex::sptr file_repeater_ex::make(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec, bool repeat, int repeat_delay,int repeat_times)
   {
     return gnuradio::get_initial_sptr
-      (new file_repeater_ex_impl(itemsize, filename, delayFirstStartSec, repeat, repeat_delay,repeat_times));
+      (new file_repeater_ex_impl(itemsize, filename, complex_conv, delayFirstStartSec, repeat, repeat_delay,repeat_times));
   }
 
-file_repeater_ex_impl::file_repeater_ex_impl(size_t itemsize, const char *filename, float delayFirstStartSec, bool repeat, int repeat_delay,int repeat_times)
+file_repeater_ex_impl::file_repeater_ex_impl(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec, bool repeat, int repeat_delay,int repeat_times)
 : sync_block("filerepeater",
 			io_signature::make(0, 0, 0),
 			io_signature::make(1, 1, itemsize)),
 	d_itemsize(itemsize), d_fp(0), d_new_fp(0), d_repeat(repeat),d_repeat_delay(repeat_delay),d_repeat_times(repeat_times),
-	d_updated(false), d_delayFirstStart(delayFirstStartSec),bFirstWorkCall(true)
+	d_updated(false), d_delayFirstStart(delayFirstStartSec),bFirstWorkCall(true),d_complex_conv(complex_conv)
 {
 		if (d_delayFirstStart > 0.0) {
 		  bDelayingFirst = true;
+		}
+
+		// Some checks for efficiency in work runtime routine to key off bool rather than multiple calls every time
+		if (d_itemsize == sizeof(gr_complex) && (d_complex_conv > 0)) {
+			convData = true;
+	    	int imaxItems=gr::block::max_noutput_items();
+	    	if (imaxItems==0)
+	    		imaxItems=8192;
+
+	    	convBuffer = new char[imaxItems];
+		}
+		else {
+			convData = false;
+			convBuffer = NULL;
 		}
 
 		open(filename, repeat,repeat_delay,repeat_times);
 		do_update();
 }
 
+bool file_repeater_ex_impl::stop() {
+	if (convBuffer) {
+		delete[] convBuffer;
+		convBuffer = NULL;
+	}
+
+    if(d_fp) {
+      fclose ((FILE*)d_fp);
+      d_fp = NULL;
+    }
+
+    if(d_new_fp) {
+      fclose ((FILE*)d_new_fp);
+      d_new_fp = NULL;
+    }
+
+	return true;
+}
+
   file_repeater_ex_impl::~file_repeater_ex_impl()
   {
-    if(d_fp)
-      fclose ((FILE*)d_fp);
-    if(d_new_fp)
-      fclose ((FILE*)d_new_fp);
+	  // Swig doesn't always manage destructors correctly but gnuradio calls stop (which can be called multiple times here.
+	  stop();
   }
 
   bool
@@ -217,17 +248,51 @@ file_repeater_ex_impl::file_repeater_ex_impl(size_t itemsize, const char *filena
 
     long itemsRead;
 
-	itemsRead = fread(o, d_itemsize, size, (FILE*)d_fp);
+    if (!convData) {
+    	itemsRead = fread(o, d_itemsize, size, (FILE*)d_fp);
+    }
+    else {
+    	// In this mode we're reading signed/unsigned byte complex for conversion.  So override size to 2 byte complex size
+    	itemsRead = fread(convBuffer, 2, size, (FILE*)d_fp);
+    }
 
     if (itemsRead > 0) {
     	// we read some data
-        if (itemsRead < noutput_items) {
-        	// If we're towards the end of the file and we don't have enough data to satisfy the request, return what we have.
-        	long remaining = noutput_items - itemsRead;
-        	o += itemsRead * d_itemsize;
-        	memset((void *)o,0x00,d_itemsize * remaining);
-        	return noutput_items;
-        }
+		// If we're towards the end of the file and we don't have enough data to satisfy the request, return what we have.
+		long remaining = noutput_items - itemsRead;
+		o += itemsRead * d_itemsize;
+
+		if (!convData) {
+			memset((void *)o,0x00,d_itemsize * remaining);
+		}
+		else {
+			// We're converting so we're going to have to iterate through.
+			gr_complex *complexout = (gr_complex *)output_items[0];
+			float newI,newQ;
+			int i;
+			char *bPointer = convBuffer;
+
+			for (i=0;i<itemsRead;i++) {
+				if (d_complex_conv == CONVTYPE_UNSIGNED8) {
+					// unsigned8 / rtl_sdr
+					newI = ((float)bPointer[0])/((float)UCHAR_MAX/2.0)-1.0;
+					newQ = ((float)bPointer[1])/((float)UCHAR_MAX/2.0)-1.0;
+				}
+				else {
+					// signed8 / hackrf
+					newI = ((float)((signed char)bPointer[0]))/(float)SCHAR_MAX;
+					newQ = ((float)((signed char)bPointer[1]))/(float)SCHAR_MAX;
+				}
+
+				gr_complex newComplex(newI,newQ);
+
+				complexout[i] = newComplex;
+
+				bPointer += 2;
+			}
+		}
+
+		return itemsRead;
     }
     else {
     	// if itemsRead = 0, then we've reached the end of the file.

@@ -60,12 +60,14 @@ namespace gr {
        *
        * \param itemsize	the size of each item in the file, in bytes
        * \param filename	name of the file to source from
+       * \param complex_conv	Perform complex conversion (if any)
+       * \param delayFirstStartSec	Seconds as float to wait before starting to play file for the first time
        * \param repeat	repeat file from start
        * \param repeat_delay	ms to wait before starting to transmit the file again (0 for continuous)
-       * \param repeat	repeat number of times to repeat the file (0 for no limit)
+       * \param repeat_times	repeat number of times to repeat the file (0 for no limit)
        */
       /* static sptr make(size_t itemsize, const char *filename, bool repeat = false); */
-      static sptr make(size_t itemsize, const char *filename, float delayFirstStartSec=0.0, bool repeat=false, int repeat_delay=0,int repeat_times=0);
+      static sptr make(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec=0.0, bool repeat=false, int repeat_delay=0,int repeat_times=0);
 
       /*!
        * \brief seek file to \p seek_point relative to \p whence
@@ -81,7 +83,7 @@ namespace gr {
        * \param filename	name of the file to source from
        * \param repeat	repeat file from start
        * \param repeat_delay	ms to wait before starting to transmit the file again (0 for continuous)
-       * \param repeat	repeat number of times to repeat the file (0 for no limit)
+       * \param repeat_times	repeat number of times to repeat the file (0 for no limit)
        */
       virtual void open(const char *filename, bool repeat,int repeat_delay, int repeat_times) = 0;
 
