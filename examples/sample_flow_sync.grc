@@ -128,7 +128,7 @@
     </param>
     <param>
       <key>file</key>
-      <value>/opt/sdr/gnuradio/gnuradio_recordings/hackrf_100MHz_8MSPS.converted.iq</value>
+      <value>/tmp/file1.iq</value>
     </param>
     <param>
       <key>_coordinate</key>
@@ -183,7 +183,7 @@
     </param>
     <param>
       <key>file</key>
-      <value>/opt/sdr/gnuradio/gnuradio_recordings/hackrf_100MHz_8MSPS.converted.iq</value>
+      <value>/tmp/file2.iq</value>
     </param>
     <param>
       <key>_coordinate</key>
