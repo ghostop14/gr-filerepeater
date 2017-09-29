@@ -26,11 +26,13 @@
  */
 
 #include "qa_filerepeater.h"
+#include "qa_flowsync.h"
 
 CppUnit::TestSuite *
 qa_filerepeater::suite()
 {
   CppUnit::TestSuite *s = new CppUnit::TestSuite("filerepeater");
+  s->addTest(gr::filerepeater::qa_flowsync::suite());
 
   return s;
 }

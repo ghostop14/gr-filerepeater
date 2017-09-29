@@ -22,5 +22,6 @@
 ########################################################################
 install(FILES
     api.h
-    file_repeater_ex.h DESTINATION include/filerepeater
+    file_repeater_ex.h
+    flowsync.h DESTINATION include/filerepeater
 )

@@ -29,6 +29,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 list(APPEND filerepeater_sources
     file_repeater_ex_impl.cc
+    flowsync_impl.cc
 )
 
 set(filerepeater_sources "${filerepeater_sources}" PARENT_SCOPE)
@@ -63,6 +64,7 @@ include_directories(${CPPUNIT_INCLUDE_DIRS})
 list(APPEND test_filerepeater_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/test_filerepeater.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/qa_filerepeater.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/qa_flowsync.cc
 )
 
 add_executable(test-filerepeater ${test_filerepeater_sources})

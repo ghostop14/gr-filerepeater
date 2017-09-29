@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<block>
+  <name>Flow Input Synchronizer</name>
+  <key>filerepeater_flowsync</key>
+  <category>[Advanced File]</category>
+  <import>import filerepeater</import>
+  <make>filerepeater.flowsync($type.size,$nconnections)</make>
+	<param>
+		<name>Output Type</name>
+		<key>type</key>
+		<type>enum</type>
+		<option>
+			<name>Complex</name>
+			<key>complex</key>
+			<opt>size:gr.sizeof_gr_complex</opt>
+		</option>
+		<option>
+			<name>Float</name>
+			<key>float</key>
+			<opt>size:gr.sizeof_float</opt>
+		</option>
+		<option>
+			<name>Int</name>
+			<key>int</key>
+			<opt>size:gr.sizeof_int</opt>
+		</option>
+		<option>
+			<name>Short</name>
+			<key>short</key>
+			<opt>size:gr.sizeof_short</opt>
+		</option>
+		<option>
+			<name>Byte</name>
+			<key>byte</key>
+			<opt>size:gr.sizeof_char</opt>
+		</option>
+	</param>
+  <param>
+    <name>Number of I/O Paths</name>
+    <key>nconnections</key>
+    <value>2</value>
+    <type>int</type>
+  </param>
+
+  <sink>
+    <name>in</name>
+    <type>$type</type>
+    <nports>$nconnections</nports>
+  </sink>
+
+  <source>
+    <name>out</name>
+    <type>$type</type>
+    <nports>$nconnections</nports>
+  </source>
+	<doc>
+If you play two file sources (even if you create two file source blocks but assign the same file to each), the data point 
+flows will not be point-synchronized.  The Flow Input Synchronizer is a sync block that just puts all inputs and outputs in step.  In other words 
+if you plotted the same file from two different file sources on a frequency sink using this block, the plots would now overlap/align whereas they 
+do not without it.
+	</doc>
+</block>

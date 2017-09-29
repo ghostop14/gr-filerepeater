@@ -7,7 +7,7 @@
 <block>
 	<name>Advanced File Source</name>
 	<key>filerepeater_file_repeater_ex</key>
-	<category>[FILEREPEATER]</category>
+	<category>[Advanced File]</category>
 	<import>import filerepeater</import>
 	<make>filerepeater.file_repeater_ex($type.size*$vlen, $file, $complexconv, $delayFirstStart,$repeat,$repeat_delay,$repeat_times)</make>
 	<callback>open($file, $repeat,$repeat_delay,$repeat_times)</callback>

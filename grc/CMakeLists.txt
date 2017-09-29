@@ -18,5 +18,6 @@
 # Boston, MA 02110-1301, USA.
 
 install(FILES
-    filerepeater_file_repeater_ex.xml DESTINATION share/gnuradio/grc/blocks
+    filerepeater_file_repeater_ex.xml
+    filerepeater_flowsync.xml DESTINATION share/gnuradio/grc/blocks
 )
