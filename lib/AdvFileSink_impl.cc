@@ -913,21 +913,30 @@ namespace gr {
         gr_vector_const_void_star &input_items,
         gr_vector_void_star &output_items)
     {
-        if(!d_fp)
-          return noutput_items;         // drop output on the floor
+        gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
+
+        if(!d_fp) {
+        	if (d_currentState)
+        		std::cout << "[Advanced File Sink] INFO - Work called and we should be writing, but file is closed." << std::endl;
+
+            return noutput_items;         // drop output on the floor
+        }
 
         char *inbuf = (char*)input_items[0];
         long  nwritten = 0;
 
         while(nwritten < noutput_items) {
+        	// fwrite: returns number of elements written
+        	// Takes: ptr to array of elements, element size, count, file stream pointer
           long count = fwrite(inbuf, d_itemsize, noutput_items - nwritten, d_fp);
           if(count == 0) {
+        	  // Error condition, nothing written for some reason.
             if(ferror(d_fp)) {
               std::stringstream s;
               s << "[Advanced File Sink] Write failed with error " << fileno(d_fp) << std::endl;
               throw std::runtime_error(s.str());
             }
-            else { // is EOF
+            else { // is EOF?  Probably will never get to this break;
               break;
             }
           }
