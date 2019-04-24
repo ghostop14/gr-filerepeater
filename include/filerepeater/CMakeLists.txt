@@ -23,5 +23,6 @@
 install(FILES
     api.h
     file_repeater_ex.h
-    flowsync.h DESTINATION include/filerepeater
+    flowsync.h
+    AdvFileSink.h DESTINATION include/filerepeater
 )

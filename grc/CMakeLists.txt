@@ -19,5 +19,6 @@
 
 install(FILES
     filerepeater_file_repeater_ex.xml
-    filerepeater_flowsync.xml DESTINATION share/gnuradio/grc/blocks
+    filerepeater_flowsync.xml
+    filerepeater_AdvFileSink.xml DESTINATION share/gnuradio/grc/blocks
 )

@@ -32,6 +32,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "AdvFileSink_impl.h"
+
 int
 main (int argc, char **argv)
 {

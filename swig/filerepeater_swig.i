@@ -10,6 +10,7 @@
 %{
 #include "filerepeater/file_repeater_ex.h"
 #include "filerepeater/flowsync.h"
+#include "filerepeater/AdvFileSink.h"
 %}
 
 
@@ -17,3 +18,5 @@
 GR_SWIG_BLOCK_MAGIC2(filerepeater, file_repeater_ex);
 %include "filerepeater/flowsync.h"
 GR_SWIG_BLOCK_MAGIC2(filerepeater, flowsync);
+%include "filerepeater/AdvFileSink.h"
+GR_SWIG_BLOCK_MAGIC2(filerepeater, AdvFileSink);
