@@ -712,18 +712,18 @@ namespace gr {
   namespace filerepeater {
 
     AdvFileSink::sptr
-    AdvFileSink::make(int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately)
+    AdvFileSink::make(int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback)
     {
       return gnuradio::get_initial_sptr
-        (new AdvFileSink_impl(itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately));
+        (new AdvFileSink_impl(itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately, freqCallback));
     }
 
     /*
      * The private constructor
      */
-    AdvFileSink_impl::AdvFileSink_impl(int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately)
+    AdvFileSink_impl::AdvFileSink_impl(int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback)
       : gr::sync_block("AdvFileSink",
-              gr::io_signature::make(1, 1, itemsize),
+              gr::io_signature::make(0, 1, itemsize),
               gr::io_signature::make(0, 0, 0))
     {
     	// Set Variables
@@ -733,6 +733,8 @@ namespace gr {
         d_maxSec = maxTimeSec;
         d_sampleRate = sampleRate;
         d_frequency = freq;
+
+        d_freqCallback = freqCallback;
 
     	if (maxSize > 0)
     		d_useSize = true;
@@ -744,6 +746,7 @@ namespace gr {
     	else
     		d_useTime = false;
 
+    	// Note: gr_complex will be 8, float will be 4
         d_itemsize = itemsize;
 
         d_baseDir = basedir;
@@ -759,6 +762,8 @@ namespace gr {
     	// Set up messages
 		message_port_register_in(pmt::mp("recordstate"));
         set_msg_handler(pmt::mp("recordstate"), boost::bind(&AdvFileSink_impl::handlePDU, this, _1) );
+		message_port_register_in(pmt::mp("data_in"));
+        set_msg_handler(pmt::mp("data_in"), boost::bind(&AdvFileSink_impl::handleMsgStream, this, _1) );
 
         if (startRecordingImmediately) {
         	// We want to start in a recording state.
@@ -778,6 +783,35 @@ namespace gr {
     {
     	close();
     }
+
+    float AdvFileSink_impl::getCenterFrequency() const {
+    	return d_frequency;
+    }
+
+    void AdvFileSink_impl::setCenterFrequency(float newValue) {
+    	if (!d_freqCallback) {
+    		return;
+    	}
+
+		// Only if we're honoring the callback
+    	d_frequency = newValue;
+
+    	if (d_currentState) {
+    		// We're recording, so we're going to have to rotate the file.
+			string newFilename = buildFileName();
+
+			// Close the file if we're currently recording
+	    	if (d_fp) {
+	    		close();
+	    	}
+
+			d_currentState = open(newFilename.c_str());
+
+			if (!d_currentState)
+		        throw std::runtime_error ("[Advanced File Sink] can't open file");
+    	}
+    }
+
 
     string AdvFileSink_impl::setTwoDigit(string& numStr) {
     	string newStr = numStr;
@@ -821,6 +855,74 @@ namespace gr {
     	string filename = d_baseDir + slash + d_baseFile + underscore + sRate + "SPS"+ underscore + sFreq + "Hz" + underscore + datestr + ext;
 
     	return filename;
+    }
+
+	void AdvFileSink_impl::handleMsgStream(pmt::pmt_t msg)
+    {
+		pmt::pmt_t inputMetadata = pmt::car(msg);
+		pmt::pmt_t data = pmt::cdr(msg);
+		size_t noutput_items = pmt::length(data);
+		const gr_complex *cc_samples;
+		const float *f_samples;
+
+		// Basically the work() function
+        gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
+
+        if(!d_fp) {
+        	if (d_currentState)
+        		std::cout << "[Advanced File Sink] INFO - MsgStream called and we should be writing, but file is closed." << std::endl;
+
+            return;         // drop output on the floor
+        }
+
+        char *inbuf;
+		if (d_itemsize == 8) {
+			cc_samples = pmt::c32vector_elements(data,noutput_items);
+	        inbuf = (char*)cc_samples;
+		}
+		else {
+			f_samples = pmt::f32vector_elements(data,noutput_items);
+	        inbuf = (char*)f_samples;
+		}
+
+        long  nwritten = 0;
+
+        while(nwritten < noutput_items) {
+        	// fwrite: returns number of elements written
+        	// Takes: ptr to array of elements, element size, count, file stream pointer
+          long count = fwrite(inbuf, d_itemsize, noutput_items - nwritten, d_fp);
+          if(count == 0) {
+        	  // Error condition, nothing written for some reason.
+            if(ferror(d_fp)) {
+              std::stringstream s;
+              s << "[Advanced File Sink] Write failed with error " << fileno(d_fp) << std::endl;
+              throw std::runtime_error(s.str());
+            }
+            else { // is EOF?  Probably will never get to this break;
+              break;
+            }
+          }
+          nwritten += count;
+          inbuf += count * d_itemsize;
+        }
+
+        d_bytesWritten += nwritten;
+
+        // We wait till the end to do size and time checks.  This could mean that we would
+        // run over slightly, but it's faster than doing these checks continuously throughout the writing loop.
+        if (d_useSize > 0) {
+            if (d_bytesWritten >= d_maxFileSize)
+            	close();
+        }
+
+        if (d_useTime) {
+			std::chrono::time_point<std::chrono::steady_clock> curTimestamp = std::chrono::steady_clock::now();
+			std::chrono::duration<double> elapsed_seconds = curTimestamp-start;
+
+			if (elapsed_seconds.count() > (double)d_maxSec) {
+				close();
+			}
+        }
     }
 
 	void AdvFileSink_impl::handlePDU(pmt::pmt_t msg)
@@ -963,6 +1065,31 @@ namespace gr {
         }
 
         return nwritten;
+    }
+
+    void
+	AdvFileSink_impl::setup_rpc()
+    {
+#ifdef GR_CTRLPORT
+    	// Getters
+      add_rpc_variable(
+        rpcbasic_sptr(new rpcbasic_register_get<AdvFileSink_impl, float>(
+	  alias(), "CenterFreq",
+	  &AdvFileSink_impl::getCenterFrequency,
+      pmt::mp(0.0), pmt::mp(100.0e6), pmt::mp(0.0),
+      "Hz", "CenterFreq", RPC_PRIVLVL_MIN,
+      DISPTIME | DISPOPTSTRIP)));
+
+      // Setters
+      add_rpc_variable(
+        rpcbasic_sptr(new rpcbasic_register_set<AdvFileSink_impl, float>(
+	  alias(), "CenterFreq",
+	  &AdvFileSink_impl::setCenterFrequency,
+      pmt::mp(0.0), pmt::mp(100.0e6), pmt::mp(0.0),
+      "Hz", "CenterFreq", RPC_PRIVLVL_MIN,
+      DISPTIME | DISPOPTSTRIP)));
+
+#endif /* GR_CTRLPORT */
     }
 
   } /* namespace filerepeater */

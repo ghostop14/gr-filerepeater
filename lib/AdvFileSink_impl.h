@@ -707,6 +707,8 @@ namespace gr {
         float d_sampleRate;
         float d_frequency;
 
+        bool d_freqCallback;
+
         boost::mutex d_mutex;
 
         FILE *d_fp = NULL;
@@ -720,10 +722,16 @@ namespace gr {
     	virtual void close();
 
      public:
-      AdvFileSink_impl(int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately);
+      AdvFileSink_impl(int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback);
       ~AdvFileSink_impl();
 
+      void setup_rpc();
+
       void handlePDU(pmt::pmt_t msg);
+      void handleMsgStream(pmt::pmt_t msg);
+
+      virtual float getCenterFrequency() const;
+      virtual void setCenterFrequency(float newValue);
 
       // Where all the action really happens
       int work(int noutput_items,
