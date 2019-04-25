@@ -684,6 +684,12 @@
 
 using namespace std;
 
+#define AFS_DATATYPE_COMPLEX 1
+#define AFS_DATATYPE_FLOAT 2
+#define AFS_DATATYPE_INT 3
+#define AFS_DATATYPE_SHORT 4
+#define AFS_DATATYPE_BYTE 5
+
 namespace gr {
   namespace filerepeater {
 
@@ -696,6 +702,7 @@ namespace gr {
     	bool d_useTime;
     	bool d_useSize;
 
+    	int d_datatype;
     	int d_itemsize;
         string d_baseDir;
         string d_baseFile;
@@ -722,7 +729,7 @@ namespace gr {
     	virtual void close();
 
      public:
-      AdvFileSink_impl(int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback);
+      AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback);
       ~AdvFileSink_impl();
 
       void setup_rpc();

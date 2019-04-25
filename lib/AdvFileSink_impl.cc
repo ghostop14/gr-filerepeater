@@ -712,21 +712,23 @@ namespace gr {
   namespace filerepeater {
 
     AdvFileSink::sptr
-    AdvFileSink::make(int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback)
+    AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback)
     {
       return gnuradio::get_initial_sptr
-        (new AdvFileSink_impl(itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately, freqCallback));
+        (new AdvFileSink_impl(datatype, itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately, freqCallback));
     }
 
     /*
      * The private constructor
      */
-    AdvFileSink_impl::AdvFileSink_impl(int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback)
+    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback)
       : gr::sync_block("AdvFileSink",
               gr::io_signature::make(0, 1, itemsize),
               gr::io_signature::make(0, 0, 0))
     {
     	// Set Variables
+    	d_datatype = datatype;
+
     	d_currentState = false;
 
         d_maxFileSize = maxSize;
@@ -864,6 +866,9 @@ namespace gr {
 		size_t noutput_items = pmt::length(data);
 		const gr_complex *cc_samples;
 		const float *f_samples;
+		const int *i_samples;
+		const short *short_samples;
+		const unsigned char *b_samples;
 
 		// Basically the work() function
         gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
@@ -876,14 +881,28 @@ namespace gr {
         }
 
         char *inbuf;
-		if (d_itemsize == 8) {
+        switch(d_datatype) {
+        case AFS_DATATYPE_COMPLEX:
 			cc_samples = pmt::c32vector_elements(data,noutput_items);
 	        inbuf = (char*)cc_samples;
-		}
-		else {
+        	break;
+        case AFS_DATATYPE_FLOAT:
 			f_samples = pmt::f32vector_elements(data,noutput_items);
 	        inbuf = (char*)f_samples;
-		}
+        	break;
+        case AFS_DATATYPE_INT:
+			i_samples = pmt::s32vector_elements(data,noutput_items);
+	        inbuf = (char*)i_samples;
+        	break;
+        case AFS_DATATYPE_SHORT:
+			short_samples = pmt::s16vector_elements(data,noutput_items);
+	        inbuf = (char*)short_samples;
+        	break;
+        case AFS_DATATYPE_BYTE:
+			b_samples = pmt::u8vector_elements(data,noutput_items);
+	        inbuf = (char*)b_samples;
+        	break;
+        }
 
         long  nwritten = 0;
 
