@@ -691,6 +691,10 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 
+// Things we need for the WAV file
+#include <gnuradio/blocks/wavfile.h>
+#include <boost/math/special_functions/round.hpp>
+
 // win32 (mingw/msvc) specific
 #ifdef HAVE_IO_H
 #include <io.h>
@@ -712,16 +716,17 @@ namespace gr {
   namespace filerepeater {
 
     AdvFileSink::sptr
-    AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback)
+    AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
+    		long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample)
     {
       return gnuradio::get_initial_sptr
-        (new AdvFileSink_impl(datatype, itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately, freqCallback));
+        (new AdvFileSink_impl(datatype, itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately, freqCallback, bits_per_sample));
     }
 
     /*
      * The private constructor
      */
-    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback)
+    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample)
       : gr::sync_block("AdvFileSink",
               gr::io_signature::make(0, 1, itemsize),
               gr::io_signature::make(0, 0, 0))
@@ -748,13 +753,38 @@ namespace gr {
     	else
     		d_useTime = false;
 
-    	// Note: gr_complex will be 8, float will be 4
         d_itemsize = itemsize;
 
         d_baseDir = basedir;
         d_baseFile = basefile;
 
         d_fp = NULL;
+
+        // Now set up WAV file calcs:
+        d_nchans = 1;  // For now just supporting 1 channel.
+
+        if(bits_per_sample != 8 && bits_per_sample != 16) {
+        	throw std::runtime_error("[Advanced File Sink] Invalid bits per sample (supports 8 and 16)");
+        }
+
+        d_bytes_per_sample = bits_per_sample / 8;
+
+        if(bits_per_sample == 8) {
+        	d_max_sample_val = UCHAR_MAX;
+			d_min_sample_val = 0;
+			d_normalize_fac  = d_max_sample_val/2;
+			d_normalize_shift = 1;
+        }
+        else {
+        	// 16
+        	d_max_sample_val = SHRT_MAX;
+        	d_min_sample_val = SHRT_MIN;
+			d_normalize_fac  = d_max_sample_val;
+			d_normalize_shift = 0;
+			if(bits_per_sample != 16) {
+			  fprintf(stderr, "[Advanced File Sink] Invalid bits per sample value requested, using 16");
+			}
+        }
 
         // Check if directory exists:
         bool dirExists = boost::filesystem::is_directory(d_baseDir);
@@ -828,7 +858,12 @@ namespace gr {
     	string slash = "/";
     	string underscore = "_";
     	string dash = "-";
-    	string ext = ".iq";
+    	string ext;
+
+    	if (d_datatype == AFS_DATATYPE_WAV)
+    		ext = ".wav";
+    	else
+    		ext = ".iq";
 
     	// Full Filename:
     	// Base Directory + base name + sample rate + frequency + YYYY_MM_DD + HH-MM-SS .iq
@@ -857,91 +892,6 @@ namespace gr {
     	string filename = d_baseDir + slash + d_baseFile + underscore + sRate + "SPS"+ underscore + sFreq + "Hz" + underscore + datestr + ext;
 
     	return filename;
-    }
-
-	void AdvFileSink_impl::handleMsgStream(pmt::pmt_t msg)
-    {
-		pmt::pmt_t inputMetadata = pmt::car(msg);
-		pmt::pmt_t data = pmt::cdr(msg);
-		size_t noutput_items = pmt::length(data);
-		const gr_complex *cc_samples;
-		const float *f_samples;
-		const int *i_samples;
-		const short *short_samples;
-		const unsigned char *b_samples;
-
-		// Basically the work() function
-        gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
-
-        if(!d_fp) {
-        	if (d_currentState)
-        		std::cout << "[Advanced File Sink] INFO - MsgStream called and we should be writing, but file is closed." << std::endl;
-
-            return;         // drop output on the floor
-        }
-
-        char *inbuf;
-        switch(d_datatype) {
-        case AFS_DATATYPE_COMPLEX:
-			cc_samples = pmt::c32vector_elements(data,noutput_items);
-	        inbuf = (char*)cc_samples;
-        	break;
-        case AFS_DATATYPE_FLOAT:
-			f_samples = pmt::f32vector_elements(data,noutput_items);
-	        inbuf = (char*)f_samples;
-        	break;
-        case AFS_DATATYPE_INT:
-			i_samples = pmt::s32vector_elements(data,noutput_items);
-	        inbuf = (char*)i_samples;
-        	break;
-        case AFS_DATATYPE_SHORT:
-			short_samples = pmt::s16vector_elements(data,noutput_items);
-	        inbuf = (char*)short_samples;
-        	break;
-        case AFS_DATATYPE_BYTE:
-			b_samples = pmt::u8vector_elements(data,noutput_items);
-	        inbuf = (char*)b_samples;
-        	break;
-        }
-
-        long  nwritten = 0;
-
-        while(nwritten < noutput_items) {
-        	// fwrite: returns number of elements written
-        	// Takes: ptr to array of elements, element size, count, file stream pointer
-          long count = fwrite(inbuf, d_itemsize, noutput_items - nwritten, d_fp);
-          if(count == 0) {
-        	  // Error condition, nothing written for some reason.
-            if(ferror(d_fp)) {
-              std::stringstream s;
-              s << "[Advanced File Sink] Write failed with error " << fileno(d_fp) << std::endl;
-              throw std::runtime_error(s.str());
-            }
-            else { // is EOF?  Probably will never get to this break;
-              break;
-            }
-          }
-          nwritten += count;
-          inbuf += count * d_itemsize;
-        }
-
-        d_bytesWritten += nwritten;
-
-        // We wait till the end to do size and time checks.  This could mean that we would
-        // run over slightly, but it's faster than doing these checks continuously throughout the writing loop.
-        if (d_useSize > 0) {
-            if (d_bytesWritten >= d_maxFileSize)
-            	close();
-        }
-
-        if (d_useTime) {
-			std::chrono::time_point<std::chrono::steady_clock> curTimestamp = std::chrono::steady_clock::now();
-			std::chrono::duration<double> elapsed_seconds = curTimestamp-start;
-
-			if (elapsed_seconds.count() > (double)d_maxSec) {
-				close();
-			}
-        }
     }
 
 	void AdvFileSink_impl::handlePDU(pmt::pmt_t msg)
@@ -980,16 +930,6 @@ namespace gr {
 		}
     }
 
-	void AdvFileSink_impl::close() {
-	      gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
-    	if (d_fp) {
-    		fclose(d_fp);
-    		d_fp = NULL;
-
-    		d_currentState = false;
-    	}
-	}
-
     bool AdvFileSink_impl::open(const char *filename)
     {
         gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
@@ -1018,15 +958,172 @@ namespace gr {
         ::close(fd);        // don't leak file descriptor if fdopen fails.
       }
 
+      if (d_datatype == AFS_DATATYPE_WAV) {
+    	  // If we have a WAV file, we have to add the WAV header
+          if(!gr::blocks::wavheader_write(d_fp,(unsigned)d_sampleRate,d_nchans, d_bytes_per_sample)) {
+    	        throw std::runtime_error ("[Advanced File Sink] can't write wav file header.");
+          }
+      }
+
+      // Finalize setup
       bool fileOpen = d_fp != 0;
 
 	  d_bytesWritten = 0;
+	  d_sample_count = 0;
 
       if (fileOpen) {
     	  start = std::chrono::steady_clock::now();
       }
 
       return fileOpen;
+    }
+
+	void AdvFileSink_impl::close() {
+	      gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
+    	if (d_fp) {
+    		if (d_datatype == AFS_DATATYPE_WAV) {
+    			// If we have a WAV file we have to finish the header now.
+    		      unsigned int byte_count = d_sample_count * d_bytes_per_sample;
+
+    		      gr::blocks::wavheader_complete(d_fp, byte_count);
+    		}
+
+    		fclose(d_fp);
+    		d_fp = NULL;
+
+    		d_currentState = false;
+    	}
+	}
+
+    short int AdvFileSink_impl::convert_to_short(float sample)
+    {
+      sample += d_normalize_shift;
+      sample *= d_normalize_fac;
+      if(sample > d_max_sample_val) {
+	sample = d_max_sample_val;
+      }
+      else if(sample < d_min_sample_val) {
+	sample = d_min_sample_val;
+      }
+
+      return (short int)boost::math::iround(sample);
+    }
+
+
+	void AdvFileSink_impl::handleMsgStream(pmt::pmt_t msg)
+    {
+		pmt::pmt_t inputMetadata = pmt::car(msg);
+		pmt::pmt_t data = pmt::cdr(msg);
+		size_t noutput_items = pmt::length(data);
+		const gr_complex *cc_samples;
+		const float *f_samples;
+		const int *i_samples;
+		const short *short_samples;
+		const unsigned char *b_samples;
+
+		// Basically the work() function
+        gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
+
+        if(!d_fp) {
+        	if (d_currentState)
+        		std::cout << "[Advanced File Sink] INFO - MsgStream called and we should be writing, but file is closed." << std::endl;
+
+            return;         // drop output on the floor
+        }
+
+        char *inbuf;
+        switch(d_datatype) {
+        case AFS_DATATYPE_COMPLEX:
+			cc_samples = pmt::c32vector_elements(data,noutput_items);
+	        inbuf = (char*)cc_samples;
+        	break;
+        case AFS_DATATYPE_FLOAT:
+        case AFS_DATATYPE_WAV:
+			f_samples = pmt::f32vector_elements(data,noutput_items);
+	        inbuf = (char*)f_samples;
+        	break;
+        case AFS_DATATYPE_INT:
+			i_samples = pmt::s32vector_elements(data,noutput_items);
+	        inbuf = (char*)i_samples;
+        	break;
+        case AFS_DATATYPE_SHORT:
+			short_samples = pmt::s16vector_elements(data,noutput_items);
+	        inbuf = (char*)short_samples;
+        	break;
+        case AFS_DATATYPE_BYTE:
+			b_samples = pmt::u8vector_elements(data,noutput_items);
+	        inbuf = (char*)b_samples;
+        	break;
+        }
+
+        long  nwritten = 0;
+
+        if (d_datatype != AFS_DATATYPE_WAV) {
+            while(nwritten < noutput_items) {
+            	// fwrite: returns number of elements written
+            	// Takes: ptr to array of elements, element size, count, file stream pointer
+              long count = fwrite(inbuf, d_itemsize, noutput_items - nwritten, d_fp);
+              if(count == 0) {
+            	  // Error condition, nothing written for some reason.
+                if(ferror(d_fp)) {
+                  std::stringstream s;
+                  s << "[Advanced File Sink] Write failed with error " << fileno(d_fp) << std::endl;
+                  throw std::runtime_error(s.str());
+                }
+                else { // is EOF?  Probably will never get to this break;
+                  break;
+                }
+              }
+              nwritten += count;
+              inbuf += count * d_itemsize;
+            }
+        }
+        else {
+        	// WAV File
+            float **in = (float**)&f_samples[0];
+            int n_in_chans = 1; // input_items.size();
+            short int sample_buf_s;
+
+            for(nwritten = 0; nwritten < noutput_items; nwritten++) {
+				for(int chan = 0; chan < d_nchans; chan++) {
+				  // Write zeros to channels which are in the WAV file
+				  // but don't have any inputs here
+				  if(chan < n_in_chans) {
+					sample_buf_s =
+					  convert_to_short(in[chan][nwritten]);
+				  }
+				  else {
+					sample_buf_s = 0;
+				  }
+
+				  gr::blocks::wav_write_sample(d_fp, sample_buf_s, d_bytes_per_sample);
+
+				  if(feof(d_fp) || ferror(d_fp)) {
+					fprintf(stderr, "[%s] file i/o error\n", __FILE__);
+					close();
+				  }
+				  d_sample_count++;
+				}
+            }
+        }
+
+        d_bytesWritten += nwritten * d_itemsize;
+
+        // We wait till the end to do size and time checks.  This could mean that we would
+        // run over slightly, but it's faster than doing these checks continuously throughout the writing loop.
+        if (d_useSize > 0) {
+            if (d_bytesWritten >= d_maxFileSize)
+            	close();
+        }
+
+        if (d_useTime) {
+			std::chrono::time_point<std::chrono::steady_clock> curTimestamp = std::chrono::steady_clock::now();
+			std::chrono::duration<double> elapsed_seconds = curTimestamp-start;
+
+			if (elapsed_seconds.count() > (double)d_maxSec) {
+				close();
+			}
+        }
     }
 
     int
@@ -1043,29 +1140,60 @@ namespace gr {
             return noutput_items;         // drop output on the floor
         }
 
-        char *inbuf = (char*)input_items[0];
         long  nwritten = 0;
 
-        while(nwritten < noutput_items) {
-        	// fwrite: returns number of elements written
-        	// Takes: ptr to array of elements, element size, count, file stream pointer
-          long count = fwrite(inbuf, d_itemsize, noutput_items - nwritten, d_fp);
-          if(count == 0) {
-        	  // Error condition, nothing written for some reason.
-            if(ferror(d_fp)) {
-              std::stringstream s;
-              s << "[Advanced File Sink] Write failed with error " << fileno(d_fp) << std::endl;
-              throw std::runtime_error(s.str());
+        if (d_datatype != AFS_DATATYPE_WAV) {
+            char *inbuf = (char*)input_items[0];
+
+            while(nwritten < noutput_items) {
+            	// fwrite: returns number of elements written
+            	// Takes: ptr to array of elements, element size, count, file stream pointer
+              long count = fwrite(inbuf, d_itemsize, noutput_items - nwritten, d_fp);
+              if(count == 0) {
+            	  // Error condition, nothing written for some reason.
+                if(ferror(d_fp)) {
+                  std::stringstream s;
+                  s << "[Advanced File Sink] Write failed with error " << fileno(d_fp) << std::endl;
+                  throw std::runtime_error(s.str());
+                }
+                else { // is EOF?  Probably will never get to this break;
+                  break;
+                }
+              }
+              nwritten += count;
+              inbuf += count * d_itemsize;
             }
-            else { // is EOF?  Probably will never get to this break;
-              break;
+        }
+        else {
+        	// WAV File
+            float **in = (float**)&input_items[0];
+            int n_in_chans = input_items.size();
+            short int sample_buf_s;
+
+            for(nwritten = 0; nwritten < noutput_items; nwritten++) {
+				for(int chan = 0; chan < d_nchans; chan++) {
+				  // Write zeros to channels which are in the WAV file
+				  // but don't have any inputs here
+				  if(chan < n_in_chans) {
+					sample_buf_s =
+					  convert_to_short(in[chan][nwritten]);
+				  }
+				  else {
+					sample_buf_s = 0;
+				  }
+
+				  gr::blocks::wav_write_sample(d_fp, sample_buf_s, d_bytes_per_sample);
+
+				  if(feof(d_fp) || ferror(d_fp)) {
+					fprintf(stderr, "[%s] file i/o error\n", __FILE__);
+					close();
+				  }
+				  d_sample_count++;
+				}
             }
-          }
-          nwritten += count;
-          inbuf += count * d_itemsize;
         }
 
-        d_bytesWritten += nwritten;
+        d_bytesWritten += nwritten * d_itemsize;
 
         // We wait till the end to do size and time checks.  This could mean that we would
         // run over slightly, but it's faster than doing these checks continuously throughout the writing loop.

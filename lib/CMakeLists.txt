@@ -40,7 +40,7 @@ if(NOT filerepeater_sources)
 endif(NOT filerepeater_sources)
 
 add_library(gnuradio-filerepeater SHARED ${filerepeater_sources})
-target_link_libraries(gnuradio-filerepeater ${Boost_LIBRARIES} ${GNURADIO_ALL_LIBRARIES})
+target_link_libraries(gnuradio-filerepeater gnuradio-blocks ${Boost_LIBRARIES} ${GNURADIO_ALL_LIBRARIES})
 set_target_properties(gnuradio-filerepeater PROPERTIES DEFINE_SYMBOL "gnuradio_filerepeater_EXPORTS")
 
 if(APPLE)
@@ -77,6 +77,7 @@ target_link_libraries(
   ${Boost_LIBRARIES}
   ${CPPUNIT_LIBRARIES}
   gnuradio-filerepeater
+  gnuradio-blocks
 )
 
 GR_ADD_TEST(test_filerepeater test-filerepeater)

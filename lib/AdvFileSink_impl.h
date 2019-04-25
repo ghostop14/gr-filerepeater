@@ -689,6 +689,7 @@ using namespace std;
 #define AFS_DATATYPE_INT 3
 #define AFS_DATATYPE_SHORT 4
 #define AFS_DATATYPE_BYTE 5
+#define AFS_DATATYPE_WAV 6
 
 namespace gr {
   namespace filerepeater {
@@ -716,6 +717,15 @@ namespace gr {
 
         bool d_freqCallback;
 
+        int d_bits_per_sample; // used for WAV files
+        int d_bytes_per_sample;
+      	int d_max_sample_val;
+      	int d_min_sample_val;
+      	int d_normalize_fac;
+      	int d_normalize_shift;
+      	int d_nchans;
+        unsigned d_sample_count;
+
         boost::mutex d_mutex;
 
         FILE *d_fp = NULL;
@@ -728,8 +738,11 @@ namespace gr {
     	virtual bool open(const char *filename);
     	virtual void close();
 
+    	short int convert_to_short(float sample);
+
      public:
-      AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback);
+      AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
+    		  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample);
       ~AdvFileSink_impl();
 
       void setup_rpc();
