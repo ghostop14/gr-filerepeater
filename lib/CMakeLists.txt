@@ -31,6 +31,7 @@ list(APPEND filerepeater_sources
     file_repeater_ex_impl.cc
     flowsync_impl.cc
     AdvFileSink_impl.cc
+    StateTimer_impl.cc
 )
 
 set(filerepeater_sources "${filerepeater_sources}" PARENT_SCOPE)

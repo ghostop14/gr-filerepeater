@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<block>
+  <name>State Timer</name>
+  <key>filerepeater_StateTimer</key>
+  <category>[Advanced File]</category>
+  <import>import filerepeater</import>
+  <make>filerepeater.StateTimer($delayBeforeStart, $triggerTime, $cycleTime)</make>
+	<param>
+		<name>Delay Before Start (s)</name>
+		<key>delayBeforeStart</key>
+		<value>0.0</value>
+		<type>float</type>
+	</param>
+
+	<param>
+		<name>Trigger Time (s)</name>
+		<key>triggerTime</key>
+		<value>10.0</value>
+		<type>float</type>
+	</param>
+
+	<param>
+		<name>Cycle Time (s)</name>
+		<key>cycleTime</key>
+		<value>30.0</value>
+		<type>float</type>
+	</param>
+
+  <source>
+    <name>trigger</name>
+    <type>message</type>
+    <optional>1</optional>
+  </source>
+	<doc>
+This block generates state messages based on the specified timers.  The message block contains a "state" meta dictionary entry with 1 for on, 0 for off.
+
+Initial Delay is just that.  How long to wait before cycles should start.  (trigger time should be less than or equal to cycle time, although trigger time equal to cycle time would produce an immediate 0,1 combination without some gap).  For instance a trigger time of 10.0 and a cycle type of 30.0 would produce a start trigger at the beginning, an end trigger after 10 seconds, then wait for the 30 seconds to expire and start over.  Note that cycle time is the total time (trigger + wait for next cycle).
+	</doc>
+</block>

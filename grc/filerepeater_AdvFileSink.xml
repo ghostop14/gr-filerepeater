@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<block>
+  <name>Advanced File Sink</name>
+  <key>filerepeater_AdvFileSink</key>
+  <category>[Advanced File]</category>
+  <import>import filerepeater</import>
+  <make>filerepeater.AdvFileSink($type.datatype, $type.size*$vlen, $basedir, $basefile, $radioCenterFreq, $sampleRate, $maxSize, $maxTimeSec,$recordOnStart,$honorFreqChange,$bits_per_sample)</make>
+	<callback>setCenterFrequency($radioCenterFreq)</callback>
+	<param>
+		<name>Base Directory</name>
+		<key>basedir</key>
+		<value>/tmp</value>
+		<type>string</type>
+	</param>
+	<param>
+		<name>Base Filename</name>
+		<key>basefile</key>
+		<value>gr_record</value>
+		<type>string</type>
+	</param>
+	<param>
+		<name>Input Type</name>
+		<key>type</key>
+		<type>enum</type>
+		<option>
+			<name>Complex</name>
+			<key>complex</key>
+			<opt>datatype:1</opt>
+			<opt>typename:complex</opt>
+			<opt>size:gr.sizeof_gr_complex</opt>
+			<opt>hide_wav:all</opt>
+		</option>
+		<option>
+			<name>Float</name>
+			<key>float</key>
+			<opt>datatype:2</opt>
+			<opt>typename:float</opt>
+			<opt>size:gr.sizeof_float</opt>
+			<opt>hide_wav:all</opt>
+		</option>
+		<option>
+			<name>WAV File (Float)</name>
+			<key>floatwav</key>
+			<opt>datatype:6</opt>
+			<opt>typename:float</opt>
+			<opt>size:gr.sizeof_float</opt>
+			<opt>hide_wav:</opt>
+		</option>
+		<option>
+			<name>Int</name>
+			<key>int</key>
+			<opt>datatype:3</opt>
+			<opt>typename:int</opt>
+			<opt>size:gr.sizeof_int</opt>
+			<opt>hide_wav:all</opt>
+		</option>
+		<option>
+			<name>Short</name>
+			<key>short</key>
+			<opt>datatype:4</opt>
+			<opt>typename:short</opt>
+			<opt>size:gr.sizeof_short</opt>
+			<opt>hide_wav:all</opt>
+		</option>
+		<option>
+			<name>Byte</name>
+			<key>byte</key>
+			<opt>datatype:5</opt>
+			<opt>typename:byte</opt>
+			<opt>size:gr.sizeof_char</opt>
+			<opt>hide_wav:all</opt>
+		</option>
+	</param>
+	<param>
+		<name>Bits per Sample</name>
+		<key>bits_per_sample</key>
+		<value>8</value>
+		<type>int</type>
+		<hide>$type.hide_wav</hide>
+		
+	</param>
+	<param>
+		<name>Frequency</name>
+		<key>radioCenterFreq</key>
+		<value>freq</value>
+		<type>float</type>
+	</param>
+	<param>
+		<name>Sample Rate</name>
+		<key>sampleRate</key>
+		<value>samp_rate</value>
+		<type>float</type>
+	</param>
+	<param>
+		<name>Max File Size (B)</name>
+		<key>maxSize</key>
+		<value>0</value>
+		<type>int</type>
+	</param>
+	<param>
+		<name>Max Record Time (s)</name>
+		<key>maxTimeSec</key>
+		<value>0</value>
+		<type>int</type>
+	</param>
+	<param>
+		<name>Record On Start</name>
+		<key>recordOnStart</key>
+		<type>enum</type>
+		<option>
+			<name>No</name>
+			<key>False</key>
+		</option>
+		<option>
+			<name>Yes</name>
+			<key>True</key>
+		</option>
+	</param>
+	<param>
+		<name>Honor Freq Change</name>
+		<key>honorFreqChange</key>
+		<type>enum</type>
+		<option>
+			<name>No</name>
+			<key>False</key>
+		</option>
+		<option>
+			<name>Yes</name>
+			<key>True</key>
+		</option>
+	</param>
+	<param>
+		<name>Vec Length</name>
+		<key>vlen</key>
+		<value>1</value>
+		<type>int</type>
+	</param>
+	<check>$vlen &gt; 0</check>
+  <sink>
+    <name>data_in</name>
+    <type>message</type>
+    <optional>1</optional>
+  </sink>
+	<sink>
+		<name>in</name>
+		<type>$type.typename</type>
+		<vlen>$vlen</vlen>
+    	<optional>1</optional>
+	</sink>
+  <sink>
+    <name>recordstate</name>
+    <type>message</type>
+    <optional>1</optional>
+  </sink>
+	<doc>
+This is an enhanced file sink block that can key off of a message to start/stop recording.  Files will be stored in the specified directory and start with the specified base filename.  Sample rate, frequency, and a timestamp will then be added to each filename.
+
+Note: Files can be limited in either byte size or recording time from the parameters above.  Setting either to 0 disables that limit check.
+
+Honor Freq Change indicates to the block how to handle a changing frequency.  If set to yes and recording is taking place, the file will be closed and a new one will be started with the new frequency in the designator.
+
+The data_in connector can be used to pass data packets in for recording as if they had come through the work stream.
+	</doc>
+</block>
