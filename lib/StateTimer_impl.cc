@@ -832,7 +832,9 @@ namespace gr {
 
     		// If we're past the end of a trigger cycle and we were high
     		if (elapsed_seconds.count() >= (double)d_triggerDelay) {
+		        gr::thread::scoped_lock lock(d_mutex);
     			if (curState) {
+
         			curState = false;
         			sendMsg(curState);
     			}
@@ -860,6 +862,8 @@ namespace gr {
 
     		// we get to the end of a cycle.
     		if (elapsed_seconds.count() >= (double)d_cycleDelay) {
+
+		        gr::thread::scoped_lock lock(d_mutex);
 
     			if (!curState) {
     				// If we've transitioned down, we can start the next cycle.

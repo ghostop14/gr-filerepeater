@@ -58,7 +58,7 @@
     </param>
     <param>
       <key>realtime_scheduling</key>
-      <value></value>
+      <value>1</value>
     </param>
     <param>
       <key>run_command</key>
@@ -320,7 +320,7 @@
     </param>
     <param>
       <key>cycleTime</key>
-      <value>20.0</value>
+      <value>10.0</value>
     </param>
     <param>
       <key>delayBeforeStart</key>
@@ -352,7 +352,7 @@
     </param>
     <param>
       <key>triggerTime</key>
-      <value>10.0</value>
+      <value>5.0</value>
     </param>
   </block>
   <connection>

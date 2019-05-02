@@ -688,7 +688,9 @@ namespace gr {
     class StateTimer_impl : public StateTimer
     {
      protected:
-    	bool curState;
+        boost::mutex d_mutex;
+
+        bool curState;
 
     	bool d_startInitialized;
 
