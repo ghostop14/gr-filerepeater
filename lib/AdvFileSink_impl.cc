@@ -808,6 +808,11 @@ namespace gr {
         }
     }
 
+    bool AdvFileSink_impl::stop() {
+    	close();
+
+    	return true;
+    }
     /*
      * Our virtual destructor.
      */

@@ -747,6 +747,8 @@ namespace gr {
 
       void setup_rpc();
 
+      virtual bool stop();
+
       void handlePDU(pmt::pmt_t msg);
       void handleMsgStream(pmt::pmt_t msg);
 
