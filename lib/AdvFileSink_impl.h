@@ -707,6 +707,8 @@ namespace gr {
     	int d_itemsize;
         string d_baseDir;
         string d_baseFile;
+        string d_fileExtension;
+
         long d_maxFileSize;
         long d_maxSec;
 

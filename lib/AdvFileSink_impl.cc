@@ -755,8 +755,33 @@ namespace gr {
 
         d_itemsize = itemsize;
 
+        // File Setup
+
         d_baseDir = basedir;
         d_baseFile = basefile;
+
+        d_fileExtension = ".iq";
+
+        switch(d_datatype) {
+        case AFS_DATATYPE_COMPLEX:
+        	d_fileExtension = ".iq";
+        	break;
+        case AFS_DATATYPE_FLOAT:
+        	d_fileExtension = ".float";
+        	break;
+        case AFS_DATATYPE_WAV:
+        	d_fileExtension = ".wav";
+        	break;
+        case AFS_DATATYPE_INT:
+        	d_fileExtension = ".int";
+        	break;
+        case AFS_DATATYPE_SHORT:
+        	d_fileExtension = ".short";
+        	break;
+        case AFS_DATATYPE_BYTE:
+        	d_fileExtension = ".byte";
+        	break;
+        }
 
         d_fp = NULL;
 
@@ -863,12 +888,6 @@ namespace gr {
     	string slash = "/";
     	string underscore = "_";
     	string dash = "-";
-    	string ext;
-
-    	if (d_datatype == AFS_DATATYPE_WAV)
-    		ext = ".wav";
-    	else
-    		ext = ".iq";
 
     	// Full Filename:
     	// Base Directory + base name + sample rate + frequency + YYYY_MM_DD + HH-MM-SS .iq
@@ -894,7 +913,7 @@ namespace gr {
 
     	string datestr = year + underscore + month + underscore + day + underscore + "T" + hour + dash + minute + dash + sec;
 
-    	string filename = d_baseDir + slash + d_baseFile + underscore + sRate + "SPS"+ underscore + sFreq + "Hz" + underscore + datestr + ext;
+    	string filename = d_baseDir + slash + d_baseFile + underscore + sRate + "SPS"+ underscore + sFreq + "Hz" + underscore + datestr + d_fileExtension;
 
     	return filename;
     }
