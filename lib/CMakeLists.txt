@@ -32,6 +32,7 @@ list(APPEND filerepeater_sources
     flowsync_impl.cc
     AdvFileSink_impl.cc
     StateTimer_impl.cc
+    TimeOfDay_impl.cc
 )
 
 set(filerepeater_sources "${filerepeater_sources}" PARENT_SCOPE)
@@ -68,6 +69,8 @@ list(APPEND test_filerepeater_sources
     ${CMAKE_CURRENT_SOURCE_DIR}/qa_filerepeater.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/qa_flowsync.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/AdvFileSink_impl.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/TimeOfDay_impl.cc
+    
 )
 
 add_executable(test-filerepeater ${test_filerepeater_sources})
@@ -79,6 +82,7 @@ target_link_libraries(
   ${CPPUNIT_LIBRARIES}
   gnuradio-filerepeater
   gnuradio-blocks
+  boost_thread
 )
 
 GR_ADD_TEST(test_filerepeater test-filerepeater)

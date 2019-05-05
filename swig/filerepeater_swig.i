@@ -12,6 +12,7 @@
 #include "filerepeater/flowsync.h"
 #include "filerepeater/AdvFileSink.h"
 #include "filerepeater/StateTimer.h"
+#include "filerepeater/TimeOfDay.h"
 %}
 
 
@@ -23,3 +24,5 @@ GR_SWIG_BLOCK_MAGIC2(filerepeater, flowsync);
 GR_SWIG_BLOCK_MAGIC2(filerepeater, AdvFileSink);
 %include "filerepeater/StateTimer.h"
 GR_SWIG_BLOCK_MAGIC2(filerepeater, StateTimer);
+%include "filerepeater/TimeOfDay.h"
+GR_SWIG_BLOCK_MAGIC2(filerepeater, TimeOfDay);

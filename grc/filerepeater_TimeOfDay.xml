@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<block>
+  <name>Time Of Day</name>
+  <key>filerepeater_TimeOfDay</key>
+  <category>[Advanced File]</category>
+  <import>import filerepeater</import>
+  <make>filerepeater.TimeOfDay($hours, $minutes, $seconds, $triggerTime)</make>
+	<param>
+		<name>Time Hour (24h)</name>
+		<key>hours</key>
+		<value>15</value>
+		<type>int</type>
+	</param>
+
+	<param>
+		<name>Time Minute</name>
+		<key>minutes</key>
+		<value>00</value>
+		<type>int</type>
+	</param>
+	
+	<param>
+		<name>Time Seconds</name>
+		<key>seconds</key>
+		<value>00</value>
+		<type>int</type>
+	</param>
+	
+	
+	<param>
+		<name>Active Time (s)</name>
+		<key>triggerTime</key>
+		<value>300.0</value>
+		<type>float</type>
+	</param>
+  <source>
+    <name>trigger</name>
+    <type>message</type>
+    <optional>1</optional>
+  </source>
+	<doc>
+This block generates state messages.  A state=1 is sent at the specified time of day, then a state=0 is sent when the specified length expires.  The message block contains a "state" meta dictionary entry with 1 for on, 0 for off.
+	</doc>
+</block>

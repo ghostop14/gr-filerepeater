@@ -21,5 +21,6 @@ install(FILES
     filerepeater_file_repeater_ex.xml
     filerepeater_flowsync.xml
     filerepeater_AdvFileSink.xml
-    filerepeater_StateTimer.xml DESTINATION share/gnuradio/grc/blocks
+    filerepeater_StateTimer.xml
+    filerepeater_TimeOfDay.xml DESTINATION share/gnuradio/grc/blocks
 )
