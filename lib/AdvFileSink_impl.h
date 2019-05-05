@@ -708,6 +708,7 @@ namespace gr {
         string d_baseDir;
         string d_baseFile;
         string d_fileExtension;
+        bool d_bUnbuffered;
 
         long d_maxFileSize;
         long d_maxSec;
@@ -744,7 +745,7 @@ namespace gr {
 
      public:
       AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
-    		  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample);
+    		  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample, bool bUnbuffered);
       ~AdvFileSink_impl();
 
       void setup_rpc();

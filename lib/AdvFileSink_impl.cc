@@ -717,16 +717,17 @@ namespace gr {
 
     AdvFileSink::sptr
     AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
-    		long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample)
+    		long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample, bool bUnbuffered)
     {
       return gnuradio::get_initial_sptr
-        (new AdvFileSink_impl(datatype, itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately, freqCallback, bits_per_sample));
+        (new AdvFileSink_impl(datatype, itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately, freqCallback, bits_per_sample, bUnbuffered));
     }
 
     /*
      * The private constructor
      */
-    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample)
+    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec,
+    		bool startRecordingImmediately, bool freqCallback, int bits_per_sample, bool bUnbuffered)
       : gr::sync_block("AdvFileSink",
               gr::io_signature::make(0, 1, itemsize),
               gr::io_signature::make(0, 0, 0))
@@ -756,6 +757,8 @@ namespace gr {
         d_itemsize = itemsize;
 
         // File Setup
+
+        d_bUnbuffered = bUnbuffered;
 
         d_baseDir = basedir;
         d_baseFile = basefile;
@@ -1216,6 +1219,9 @@ namespace gr {
 				}
             }
         }
+
+        if (d_bUnbuffered)
+        	fflush(d_fp);
 
         d_bytesWritten += nwritten * d_itemsize;
 
