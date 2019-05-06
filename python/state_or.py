@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+from gnuradio import gr
+import pmt
+
+class StateMessageOr(gr.sync_block):
+  def __init__(self):
+    gr.sync_block.__init__(self, name = "State Message OR", in_sig = None, out_sig = None)
+    
+    self.message_port_register_in(pmt.intern("state1"))
+    self.message_port_register_in(pmt.intern("state2"))
+    self.message_port_register_out(pmt.intern("state"))
+    self.set_msg_handler(pmt.intern("state1"), self.state1Handler)   
+    self.set_msg_handler(pmt.intern("state2"), self.state2Handler)
+    
+    self.state1 = False
+    self.state2 = False
+    
+    self.curState = False   
+
+  def state1Handler(self, pdu):
+    meta = pmt.to_python(pmt.car(pdu))
+    
+    try:    
+      newState = int(meta['state'])
+      # print "Received message 1: %d " % newState
+      if newState == 1:
+        self.state1 = True
+      else:
+        self.state1 = False
+      
+      if (self.state1 or self.state2):
+        if (not self.curState):
+          self.sendState(True)
+          self.curState = True
+      else:
+        self.sendState(False)
+        self.curState = False
+    except Exception as e:
+      print "Error with state1 message: %s" % str(e)
+      print str(meta)    
+            
+  def state2Handler(self, pdu):
+    meta = pmt.to_python(pmt.car(pdu))
+    
+    try:
+      newState = int(meta['state'])
+      
+      # print "Received message 2: %d " % newState
+      if newState == 1:
+        self.state2 = True
+      else:
+        self.state2 = False
+      
+      if (self.state1 or self.state2):
+        if (not self.curState):
+          self.sendState(True)
+          self.curState = True
+      else:
+        self.sendState(False)
+        self.curState = False
+    except Exception as e:
+      print "Error with state2 message: %s" % str(e)
+      print str(meta)    
+      
+  def sendState(self,state):
+    meta = {}  
+    
+    if (state):    
+      meta['state'] = 1
+    else:
+      meta['state'] = 0
+      
+    self.message_port_pub(pmt.intern("state"),pmt.cons( pmt.to_pmt(meta), pmt.PMT_NIL ))

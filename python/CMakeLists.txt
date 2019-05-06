@@ -31,6 +31,8 @@ endif()
 GR_PYTHON_INSTALL(
     FILES
     __init__.py
+    state_and.py
+    state_or.py
     DESTINATION ${GR_PYTHON_DIR}/filerepeater
 )
 
