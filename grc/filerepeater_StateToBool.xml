@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<block>
+  <name>State Msg To Bool</name>
+  <key>filerepeater_StateToBool</key>
+  <category>[Advanced File]</category>
+  <import>import filerepeater</import>
+  <make>filerepeater.StateToBool()</make>
+
+  <sink>
+    <name>state</name>
+    <type>message</type>
+  </sink>
+  <source>
+    <name>bool</name>
+    <type>message</type>
+  </source>
+	<doc>
+This block converts a 'state' metadata item to a pmt bool that is compatible with other blocks such as mute.
+	</doc>
+</block>

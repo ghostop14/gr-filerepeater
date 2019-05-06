@@ -33,6 +33,7 @@ GR_PYTHON_INSTALL(
     __init__.py
     state_and.py
     state_or.py
+    StateToBool.py
     DESTINATION ${GR_PYTHON_DIR}/filerepeater
 )
 
