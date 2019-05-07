@@ -26,5 +26,6 @@ install(FILES
     filerepeater_StateOr.xml
     filerepeater_StateToBool.xml
     filerepeater_TimeOfDay.xml 
+    filerepeater_msg_to_file.xml
     DESTINATION share/gnuradio/grc/blocks
 )

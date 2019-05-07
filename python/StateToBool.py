@@ -26,5 +26,5 @@ class StateToBool(gr.sync_block):
       self.message_port_pub(pmt.intern("bool"),pmt.to_pmt(boolState))
       
     except Exception as e:
-      print "Error with state message: %s" % str(e)
+      print "[State to Bool] Error with state message: %s" % str(e)
       print str(meta)    
