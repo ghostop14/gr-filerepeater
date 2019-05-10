@@ -25,7 +25,7 @@ set (CMAKE_CXX_STANDARD 11)
 include(GrPlatform) #define LIB_SUFFIX
 
 include_directories(${Boost_INCLUDE_DIR})
-link_directories(${Boost_LIBRARY_DIRS})
+link_directories(${Boost_LIBRARY_DIRS} pthread)
 
 list(APPEND filerepeater_sources
     file_repeater_ex_impl.cc
@@ -83,6 +83,7 @@ target_link_libraries(
   gnuradio-filerepeater
   gnuradio-blocks
   boost_thread
+  pthread
 )
 
 GR_ADD_TEST(test_filerepeater test-filerepeater)
