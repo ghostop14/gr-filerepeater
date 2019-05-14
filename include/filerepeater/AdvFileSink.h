@@ -704,7 +704,7 @@ namespace gr {
        * creating new instances.
        */
       static sptr make(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
-    		  	  	  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample, bool bUnbuffered);
+    		  	  	  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered);
 
       virtual float getCenterFrequency() const = 0;
       virtual void setCenterFrequency(float newValue) = 0;

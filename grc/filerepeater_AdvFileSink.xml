@@ -4,7 +4,7 @@
   <key>filerepeater_AdvFileSink</key>
   <category>[Advanced File]</category>
   <import>import filerepeater</import>
-  <make>filerepeater.AdvFileSink($type.datatype, $type.size*$vlen, $basedir, $basefile, $radioCenterFreq, $sampleRate, $maxSize, $maxTimeSec,$recordOnStart,$honorFreqChange,$bits_per_sample,$unbuffered)</make>
+  <make>filerepeater.AdvFileSink($type.datatype, $type.size*$vlen, $basedir, $basefile, $radioCenterFreq, $sampleRate, $maxSize, $maxTimeSec,$recordOnStart,$honorFreqChange,$autostartFreqChange, $bits_per_sample,$unbuffered)</make>
 	<callback>setCenterFrequency($radioCenterFreq)</callback>
 	<param>
 		<name>Base Directory</name>
@@ -119,6 +119,19 @@
 	<param>
 		<name>Honor Freq Change</name>
 		<key>honorFreqChange</key>
+		<type>enum</type>
+		<option>
+			<name>No</name>
+			<key>False</key>
+		</option>
+		<option>
+			<name>Yes</name>
+			<key>True</key>
+		</option>
+	</param>
+	<param>
+		<name>Autostart on Freq Change</name>
+		<key>autostartFreqChange</key>
 		<type>enum</type>
 		<option>
 			<name>No</name>

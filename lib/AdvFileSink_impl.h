@@ -719,6 +719,7 @@ namespace gr {
         float d_frequency;
 
         bool d_freqCallback;
+        bool d_autoStartFreqChange;
 
         int d_bits_per_sample; // used for WAV files
         int d_bytes_per_sample;
@@ -745,7 +746,7 @@ namespace gr {
 
      public:
       AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
-    		  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample, bool bUnbuffered);
+    		  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered);
       ~AdvFileSink_impl();
 
       void setup_rpc();

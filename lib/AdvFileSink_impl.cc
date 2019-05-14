@@ -717,17 +717,17 @@ namespace gr {
 
     AdvFileSink::sptr
     AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
-    		long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, int bits_per_sample, bool bUnbuffered)
+    		long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered)
     {
       return gnuradio::get_initial_sptr
-        (new AdvFileSink_impl(datatype, itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately, freqCallback, bits_per_sample, bUnbuffered));
+        (new AdvFileSink_impl(datatype, itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately, freqCallback, autostartFreqChange, bits_per_sample, bUnbuffered));
     }
 
     /*
      * The private constructor
      */
     AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec,
-    		bool startRecordingImmediately, bool freqCallback, int bits_per_sample, bool bUnbuffered)
+    		bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered)
       : gr::sync_block("AdvFileSink",
               gr::io_signature::make(0, 1, itemsize),
               gr::io_signature::make(0, 0, 0))
@@ -743,6 +743,7 @@ namespace gr {
         d_frequency = freq;
 
         d_freqCallback = freqCallback;
+        d_autoStartFreqChange = autostartFreqChange;
 
     	if (maxSize > 0)
     		d_useSize = true;
@@ -857,6 +858,9 @@ namespace gr {
     	if (!d_freqCallback) {
     		return;
     	}
+
+    	if (d_autoStartFreqChange)
+    		d_currentState = true;
 
 		// Only if we're honoring the callback
     	d_frequency = newValue;
@@ -1178,8 +1182,10 @@ namespace gr {
                     pmt::pmt_t tag_Freq = t.value;
                     float t_freq = pmt::to_float(tag_Freq);
 
-                    if (t_freq != d_frequency)
+                    if (t_freq != d_frequency) {
+                    	// If we have a frequency tag, force a rotate and a start on a new frequency.
                     	setCenterFrequency(t_freq);
+                    }
                 }
                 catch(...) {
 
