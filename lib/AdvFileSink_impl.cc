@@ -1167,6 +1167,27 @@ namespace gr {
             return noutput_items;         // drop output on the floor
         }
 
+        if (d_freqCallback) {
+        	std::vector<tag_t> tags;
+        	get_tags_in_range(tags,0,0,noutput_items-1,pmt::intern("freq"));
+
+            for(size_t i=0; i<tags.size(); i++){
+                gr::tag_t t = tags[i];
+
+                try {
+                    pmt::pmt_t tag_Freq = t.value;
+                    float t_freq = pmt::to_float(tag_Freq);
+
+                    if (t_freq != d_frequency)
+                    	setCenterFrequency(t_freq);
+                }
+                catch(...) {
+
+                }
+            }
+
+        }
+
         long  nwritten = 0;
 
         if (d_datatype != AFS_DATATYPE_WAV) {
