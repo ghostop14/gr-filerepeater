@@ -352,7 +352,7 @@
     </param>
     <param>
       <key>triggerTime</key>
-      <value>5.0</value>
+      <value>5</value>
     </param>
   </block>
   <connection>

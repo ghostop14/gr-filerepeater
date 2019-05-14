@@ -741,7 +741,9 @@ namespace gr {
 
     void StateTimer_impl::StartThreads(void) {
     	triggerThread = new boost::thread(boost::bind(&StateTimer_impl::runTriggerThread, this));
-    	cycleThread = new boost::thread(boost::bind(&StateTimer_impl::runCycleThread, this));
+
+    	if (d_triggerDelay < d_cycleDelay)
+    		cycleThread = new boost::thread(boost::bind(&StateTimer_impl::runCycleThread, this));
     }
 
     bool StateTimer_impl::stop() {
@@ -834,9 +836,14 @@ namespace gr {
     		if (elapsed_seconds.count() >= (double)d_triggerDelay) {
 		        gr::thread::scoped_lock lock(d_mutex);
     			if (curState) {
-
         			curState = false;
         			sendMsg(curState);
+
+        			if (d_triggerDelay == d_cycleDelay) {
+        				// our trigger is our cycle, just want a close then open
+        				curState = true;
+        				sendMsg(curState);
+        			}
     			}
     		}
 
