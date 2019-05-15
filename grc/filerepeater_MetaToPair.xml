@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<block>
+  <name>Message Meta Value to Pair</name>
+  <key>filerepeater_MetaToPair</key>
+  <category>[Advanced File]</category>
+  <import>import filerepeater</import>
+  <make>filerepeater.MetaToPair($keyin,$keyout)</make>
+
+  <param>
+    <name>Incoming Meta Name</name>
+    <key>keyin</key>
+    <value>key in</value>
+    <type>string</type>
+  </param>
+  <param>
+    <name>Outgoing Pair Name</name>
+    <key>keyout</key>
+    <value>key out</value>
+    <type>string</type>
+  </param>
+  <sink>
+    <name>inmeta</name>
+    <type>message</type>
+  </sink>
+  <source>
+    <name>outpair</name>
+    <type>message</type>
+  </source>
+	<doc>
+This block converts a metadata dictionary item to a pmt pair that is compatible with other blocks expecting a pair in.  You can specify which item in the incoming metadata to output as a pair and what the pair name is.
+	</doc>
+</block>

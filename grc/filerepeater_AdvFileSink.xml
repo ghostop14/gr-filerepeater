@@ -185,6 +185,8 @@ Note: Files can be limited in either byte size or recording time from the parame
 
 Honor Freq Change indicates to the block how to handle a changing frequency.  If set to yes and recording is taking place, the file will be closed and a new one will be started with the new frequency in the designator.
 
+Autostart on freq change, indicates if file recording will automatically start (if not started), or stop/start a new file when a new frequency is set.  NOTE: for autostart to function, honor freq change also needs to be set.
+
 The data_in connector can be used to pass data packets in for recording as if they had come through the work stream.
 	</doc>
 </block>

@@ -36,3 +36,4 @@ from state_and import StateMessageAnd
 from state_or import StateMessageOr
 from StateToBool import StateToBool
 from MsgToFile import MsgToFile
+from MetaToPair import MetaToPair

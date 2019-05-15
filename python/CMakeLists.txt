@@ -35,6 +35,7 @@ GR_PYTHON_INSTALL(
     state_or.py
     StateToBool.py
     MsgToFile.py
+    MetaToPair.py
     DESTINATION ${GR_PYTHON_DIR}/filerepeater
 )
 
