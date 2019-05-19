@@ -16,7 +16,7 @@ class MetaToPair(gr.sync_block):
     self.message_port_register_out(pmt.intern("outpair"))
 
   def msgHandler(self, msg):
-    meta = pmt.to_python(pmt.car(pdu))
+    meta = pmt.to_python(pmt.car(msg))
     
     try:    
       incomingVal = meta[self.incomingKeyName]
