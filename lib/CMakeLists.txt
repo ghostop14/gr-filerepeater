@@ -33,6 +33,7 @@ list(APPEND filerepeater_sources
     AdvFileSink_impl.cc
     StateTimer_impl.cc
     TimeOfDay_impl.cc
+    VectorToTxtFile_impl.cc
 )
 
 set(filerepeater_sources "${filerepeater_sources}" PARENT_SCOPE)

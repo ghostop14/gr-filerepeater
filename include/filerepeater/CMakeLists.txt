@@ -26,5 +26,6 @@ install(FILES
     flowsync.h
     AdvFileSink.h
     StateTimer.h
-    TimeOfDay.h DESTINATION include/filerepeater
+    TimeOfDay.h
+    VectorToTxtFile.h DESTINATION include/filerepeater
 )

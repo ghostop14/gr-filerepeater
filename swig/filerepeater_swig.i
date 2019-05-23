@@ -13,6 +13,7 @@
 #include "filerepeater/AdvFileSink.h"
 #include "filerepeater/StateTimer.h"
 #include "filerepeater/TimeOfDay.h"
+#include "filerepeater/VectorToTxtFile.h"
 %}
 
 
@@ -26,3 +27,5 @@ GR_SWIG_BLOCK_MAGIC2(filerepeater, AdvFileSink);
 GR_SWIG_BLOCK_MAGIC2(filerepeater, StateTimer);
 %include "filerepeater/TimeOfDay.h"
 GR_SWIG_BLOCK_MAGIC2(filerepeater, TimeOfDay);
+%include "filerepeater/VectorToTxtFile.h"
+GR_SWIG_BLOCK_MAGIC2(filerepeater, VectorToTxtFile);

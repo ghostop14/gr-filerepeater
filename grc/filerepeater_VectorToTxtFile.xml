@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<block>
+  <name>Vector To Text File</name>
+  <key>filerepeater_VectorToTxtFile</key>
+  <category>[Advanced File]</category>
+  <import>import filerepeater</import>
+  <make>filerepeater.VectorToTxtFile($filename, $vectorsize, $frequency, $sampleRate, $notes, $append, $updateRateSec, $WriteTimeHeader)</make>
+	<param>
+		<name>File</name>
+		<key>filename</key>
+		<value></value>
+		<type>file_open</type>
+	</param>
+
+	<param>
+		<name>Vector Size</name>
+		<key>vectorsize</key>
+		<value>1024</value>
+		<type>int</type>
+	</param>
+
+	<param>
+		<name>Frequency</name>
+		<key>frequency</key>
+		<value>freq</value>
+		<type>float</type>
+	</param>
+
+	<param>
+		<name>Sample Rate</name>
+		<key>sampleRate</key>
+		<value>samp_rate</value>
+		<type>float</type>
+	</param>
+
+	<param>
+		<name>Notes</name>
+		<key>notes</key>
+		<value></value>
+		<type>string</type>
+	</param>
+
+	<param>
+		<name>Update Rate (sec)</name>
+		<key>updateRateSec</key>
+		<value>30.0</value>
+		<type>float</type>
+	</param>
+
+	<param>
+		<name>Append To File</name>
+		<key>append</key>
+		<type>enum</type>
+		<option>
+			<name>Yes</name>
+			<key>True</key>
+		</option>
+		<option>
+			<name>No</name>
+			<key>False</key>
+		</option>
+	</param>
+	<param>
+		<name>Include Runtime</name>
+		<key>WriteTimeHeader</key>
+		<type>enum</type>
+		<option>
+			<name>Yes</name>
+			<key>True</key>
+		</option>
+		<option>
+			<name>No</name>
+			<key>False</key>
+		</option>
+	</param>
+  <sink>
+    <name>in</name>
+    <type>float</type>
+    <vlen>$vectorsize</vlen>
+  </sink>
+  <doc>
+  This block will take a float vector and write it as a comma-separated entry in the specified text file.  Frequency, sample rate, and any desired notes will be added before the first sample.  An optional runtime header can be added before each row in append mode to track how far into a sequence the specific vector is.
+  </doc>
+</block>
