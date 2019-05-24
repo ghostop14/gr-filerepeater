@@ -16,6 +16,10 @@ class MetaToPair(gr.sync_block):
     self.message_port_register_out(pmt.intern("outpair"))
 
   def msgHandler(self, msg):
+    if not pmt.is_pair(msg):
+      print "[MetaToPair] Incoming message is not a pair."
+      return
+      
     meta = pmt.to_python(pmt.car(msg))
     
     if not type(meta) is dict:
