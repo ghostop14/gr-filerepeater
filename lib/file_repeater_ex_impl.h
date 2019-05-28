@@ -65,6 +65,8 @@ namespace gr {
         boost::posix_time::ptime stopped_transmitting;
         bool holdingTransmit=false;
 
+        bool workDone;
+
         void do_update();
 
      public:

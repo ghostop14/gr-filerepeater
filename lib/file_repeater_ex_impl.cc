@@ -70,6 +70,8 @@ file_repeater_ex_impl::file_repeater_ex_impl(size_t itemsize, const char *filena
 		  bDelayingFirst = true;
 		}
 
+		workDone = false;
+
 		// Some checks for efficiency in work runtime routine to key off bool rather than multiple calls every time
 		if (d_itemsize == sizeof(gr_complex) && (d_complex_conv > 0)) {
 			convData = true;
@@ -94,14 +96,14 @@ bool file_repeater_ex_impl::stop() {
 		convBuffer = NULL;
 	}
 
-    if(d_fp) {
-      fclose ((FILE*)d_fp);
-      d_fp = NULL;
-    }
-
     if(d_new_fp) {
       fclose ((FILE*)d_new_fp);
       d_new_fp = NULL;
+    }
+
+    if(d_fp) {
+      fclose ((FILE*)d_fp);
+      d_fp = NULL;
     }
 
 	return true;
@@ -136,7 +138,7 @@ bool file_repeater_ex_impl::stop() {
 
     if(d_new_fp) {
       fclose(d_new_fp);
-      d_new_fp = 0;
+      d_new_fp = NULL;
     }
 
     if((d_new_fp = fdopen (fd, "rb")) == NULL) {
@@ -145,7 +147,23 @@ bool file_repeater_ex_impl::stop() {
       throw std::runtime_error("can't open file");
     }
 
-    d_updated = true;
+    //Check to ensure the file will be consumed according to item size
+    fseek(d_new_fp, 0, SEEK_END);
+    int file_size = ftell(d_new_fp);
+    rewind (d_new_fp);
+
+    //Warn the user if part of the file will not be consumed.
+    if(file_size % d_itemsize){
+      GR_LOG_WARN(d_logger, "WARNING: File will not be fully consumed with the current output type");
+    }
+
+    if(d_fp)
+      fclose(d_fp);
+
+    d_fp = d_new_fp;    // install new file pointer
+    d_new_fp = 0;
+    d_updated = false;
+
     d_repeat = repeat;
     d_repeat_delay = repeat_delay;
     d_repeat_times = repeat_times;
@@ -184,16 +202,20 @@ bool file_repeater_ex_impl::stop() {
                          gr_vector_const_void_star &input_items,
                          gr_vector_void_star &output_items)
   {
+    do_update();       // update d_fp is reqd
+
+    gr::thread::scoped_lock lock(fp_mutex); // hold for the rest of this function
+
+    if(d_fp == NULL)
+      throw std::runtime_error("work with file not open");
+
+    if (workDone)
+    	return WORK_DONE;
+
     // standard / original data out
     char *o = (char*)output_items[0];
 
     int i;
-
-    do_update();       // update d_fp is reqd
-    if(d_fp == NULL)
-      throw std::runtime_error("work with file not open");
-
-    gr::thread::scoped_lock lock(fp_mutex); // hold for the rest of this function
 
     // First check if we're in our initial delay, if so, just return zero's and exit.
 	if (bFirstWorkCall && bDelayingFirst) {
@@ -205,6 +227,9 @@ bool file_repeater_ex_impl::stop() {
     	return noutput_items;
 	}
 	else {
+		if (bFirstWorkCall)
+			bFirstWorkCall = false;
+
 		// We could be here if it's just not the first time into work.
 		if (bDelayingFirst) {
 	    	end = std::chrono::steady_clock::now();
@@ -218,7 +243,6 @@ bool file_repeater_ex_impl::stop() {
 	    	else {
 	    		// we can release our hold
 	    		bDelayingFirst = false;
-	    		// std::cout <<"DEBUG: Exiting delay first." << std::endl;
 	    	}
 		}
 	}
@@ -257,7 +281,7 @@ bool file_repeater_ex_impl::stop() {
 
 		if (convData) {
 			// We're converting so we're going to have to iterate through.
-			gr_complex *complexout = (gr_complex *)output_items[0];
+			gr_complex *complexout = (gr_complex *)o;
 			float newI,newQ;
 			int i;
 			char *bPointer = convBuffer;
@@ -293,7 +317,8 @@ bool file_repeater_ex_impl::stop() {
 
         // If we've reached the end and we're not repeating, we're done.
     	if (!d_repeat) {
-    		return WORK_DONE;
+    		workDone = true;
+    		return 0;
     	}
 
     	// We should be repeating.  If we're limiting repeats, increment our counter.
@@ -304,7 +329,9 @@ bool file_repeater_ex_impl::stop() {
         // If we have a repeat count and we've hit our limit, we're done.
         if ((d_repeat_times > 0) && (cur_repeat_cycle > d_repeat_times)) {
           	// memset((void *)o,0x00,d_itemsize*noutput_items);
-          	return WORK_DONE; // noutput_items;
+        	workDone = true;
+
+          	return 0; // noutput_items;
         }
 
         // We should still be repeating if we're here so reset the file back to the beginning.
@@ -324,6 +351,8 @@ bool file_repeater_ex_impl::stop() {
             holdingTransmit = true;
         	return 0; // let the loop read pick up on next call.
         }
+
+        return 0;
     }
 
     return noutput_items;
