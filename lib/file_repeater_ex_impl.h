@@ -57,6 +57,7 @@ namespace gr {
         int d_complex_conv;
         bool convData;
         char *convBuffer;
+        int iMaxItems;
         boost::mutex fp_mutex;
         int d_dataType;
 

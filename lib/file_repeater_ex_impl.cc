@@ -73,11 +73,11 @@ file_repeater_ex_impl::file_repeater_ex_impl(size_t itemsize, const char *filena
 		// Some checks for efficiency in work runtime routine to key off bool rather than multiple calls every time
 		if (d_itemsize == sizeof(gr_complex) && (d_complex_conv > 0)) {
 			convData = true;
-	    	int imaxItems=gr::block::max_noutput_items();
-	    	if (imaxItems==0)
-	    		imaxItems=8192;
+			iMaxItems=gr::block::max_noutput_items();
+	    	if (iMaxItems==0)
+	    		iMaxItems=8192;
 
-	    	convBuffer = new char[imaxItems];
+	    	convBuffer = new char[iMaxItems*2];
 		}
 		else {
 			convData = false;
@@ -245,7 +245,10 @@ bool file_repeater_ex_impl::stop() {
     }
     else {
     	// In this mode we're reading signed/unsigned byte complex for conversion.  So override size to 2 byte complex size
-    	itemsRead = fread(convBuffer, 2, noutput_items, (FILE*)d_fp);
+    	if (noutput_items < iMaxItems)
+    		itemsRead = fread(convBuffer, 2, noutput_items, (FILE*)d_fp);
+    	else
+    		itemsRead = fread(convBuffer, 2, iMaxItems, (FILE*)d_fp);
     }
 
     if (itemsRead > 0) {
