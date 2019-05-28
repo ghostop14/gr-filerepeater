@@ -60,7 +60,7 @@ namespace gr {
         boost::mutex fp_mutex;
         int d_dataType;
 
-        int cur_repeat_cycle=1;
+        int cur_repeat_cycle=0;
         boost::posix_time::ptime stopped_transmitting;
         bool holdingTransmit=false;
 

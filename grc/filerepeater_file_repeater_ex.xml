@@ -73,7 +73,6 @@
 	<param>
 		<name>Repeat</name>
 		<key>repeat</key>
-		<value>True</value>
 		<type>enum</type>
 		<option>
 			<name>Yes</name>

@@ -188,7 +188,6 @@ bool file_repeater_ex_impl::stop() {
     char *o = (char*)output_items[0];
 
     int i;
-    int size = noutput_items;
 
     do_update();       // update d_fp is reqd
     if(d_fp == NULL)
@@ -224,16 +223,6 @@ bool file_repeater_ex_impl::stop() {
 		}
 	}
 
-	if (!d_repeat && (cur_repeat_cycle > 1)) {
-		return 0;
-	}
-
-    // If we have a repeat count and we've exceeded it, just return 0's.
-    if ((d_repeat_times > 0) && (cur_repeat_cycle > d_repeat_times)) {
-      	memset((void *)o,0x00,d_itemsize*noutput_items);
-      	return noutput_items;
-    }
-
     // check if we're in a hold-down delay between file repeats.  If so return 0's.
     if (holdingTransmit) {
         boost::posix_time::ptime tnow = boost::posix_time::second_clock::local_time();
@@ -244,28 +233,26 @@ bool file_repeater_ex_impl::stop() {
         	memset((void *)o,0x00,d_itemsize*noutput_items);
             return noutput_items;
         }
+        else {
+        	holdingTransmit = false;
+        }
     }
 
     long itemsRead;
 
     if (!convData) {
-    	itemsRead = fread(o, d_itemsize, size, (FILE*)d_fp);
+    	itemsRead = fread(o, d_itemsize, noutput_items, (FILE*)d_fp);
     }
     else {
     	// In this mode we're reading signed/unsigned byte complex for conversion.  So override size to 2 byte complex size
-    	itemsRead = fread(convBuffer, 2, size, (FILE*)d_fp);
+    	itemsRead = fread(convBuffer, 2, noutput_items, (FILE*)d_fp);
     }
 
     if (itemsRead > 0) {
     	// we read some data
 		// If we're towards the end of the file and we don't have enough data to satisfy the request, return what we have.
-		long remaining = noutput_items - itemsRead;
-		o += itemsRead * d_itemsize;
 
-		if (!convData) {
-			memset((void *)o,0x00,d_itemsize * remaining);
-		}
-		else {
+		if (convData) {
 			// We're converting so we're going to have to iterate through.
 			gr_complex *complexout = (gr_complex *)output_items[0];
 			float newI,newQ;
@@ -299,14 +286,27 @@ bool file_repeater_ex_impl::stop() {
         // Check repeat times and reset the file
     	// std::cout << "DEBUG: Reached end of file." << std::endl;
 
+		std::cout << "[File Repeater] End of file reached." << std::endl;
+
+        // If we've reached the end and we're not repeating, we're done.
+    	if (!d_repeat) {
+    		return WORK_DONE;
+    	}
+
+    	// We should be repeating.  If we're limiting repeats, increment our counter.
         if (d_repeat_times > 0) {
             cur_repeat_cycle += 1;
         }
 
-    	// std::cout <<"DEBUG: Resetting file pointer" << std::endl;
-        // now we should still be repeating if we're here so reset the file.
-        // reset file
+        // If we have a repeat count and we've hit our limit, we're done.
+        if ((d_repeat_times > 0) && (cur_repeat_cycle > d_repeat_times)) {
+          	// memset((void *)o,0x00,d_itemsize*noutput_items);
+          	return WORK_DONE; // noutput_items;
+        }
+
+        // We should still be repeating if we're here so reset the file back to the beginning.
         if(fseek ((FILE *) d_fp, 0, SEEK_SET) == -1) {
+        	// If we're here, there was an error resetting the file.
           fprintf(stderr, "[%s] File reset / fseek failed\n", __FILE__);
           exit(-1);
         }
@@ -314,6 +314,7 @@ bool file_repeater_ex_impl::stop() {
         // if we're here:
         // 1. we should be repeating
         // 2. we should either continue repeating or we're within our cycle limit
+        // 3. We're back at the beginning of the file, so see if we need a repeat delay.
 
         if (d_repeat_delay > 0) {
             stopped_transmitting = boost::posix_time::second_clock::local_time();
