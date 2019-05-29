@@ -19,10 +19,8 @@ class StateMessageOr(gr.sync_block):
     self.curState = False   
 
   def state1Handler(self, pdu):
-    meta = pmt.to_python(pmt.car(pdu))
-    
     try:    
-      newState = int(meta['state'])
+      newState = pmt.to_python(pmt.cdr(pdu))
       # print "Received message 1: %d " % newState
       if newState == 1:
         self.state1 = True
@@ -41,10 +39,8 @@ class StateMessageOr(gr.sync_block):
       print str(meta)    
             
   def state2Handler(self, pdu):
-    meta = pmt.to_python(pmt.car(pdu))
-    
-    try:
-      newState = int(meta['state'])
+    try:    
+      newState = pmt.to_python(pmt.cdr(pdu))
       
       # print "Received message 2: %d " % newState
       if newState == 1:
@@ -64,11 +60,9 @@ class StateMessageOr(gr.sync_block):
       print str(meta)    
       
   def sendState(self,state):
-    meta = {}  
-    
     if (state):    
-      meta['state'] = 1
+      newState = 1
     else:
-      meta['state'] = 0
+      newState = 0
       
-    self.message_port_pub(pmt.intern("state"),pmt.cons( pmt.to_pmt(meta), pmt.PMT_NIL ))
+    self.message_port_pub(pmt.intern("state"),pmt.cons( pmt.intern("state"), pmt.from_long(newState) ))

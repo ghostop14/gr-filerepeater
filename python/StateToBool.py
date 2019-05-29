@@ -13,10 +13,8 @@ class StateToBool(gr.sync_block):
     self.set_msg_handler(pmt.intern("state"), self.stateHandler)   
 
   def stateHandler(self, pdu):
-    meta = pmt.to_python(pmt.car(pdu))
-    
     try:    
-      newState = int(meta['state'])
+      newState = pmt.to_python(pmt.cdr(pdu))
       # print "Received message 1: %d " % newState
       if newState == 1:
         boolState = True

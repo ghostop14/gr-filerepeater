@@ -927,12 +927,12 @@ namespace gr {
 
 	void AdvFileSink_impl::handlePDU(pmt::pmt_t msg)
     {
-		pmt::pmt_t inputMetadata = pmt::car(msg);
-		// pmt::pmt_t data = pmt::cdr(msg);
+		// pmt::pmt_t inputMetadata = pmt::car(msg);
+		pmt::pmt_t data = pmt::cdr(msg);
 		long newState;
 
 		try {
-			newState = pmt::to_long(pmt::dict_ref(inputMetadata, pmt::mp("state"), pmt::mp(0)));
+			newState = pmt::to_long(data);
 		}
 		catch(...) {
 	        cout << "[Advanced File Sink] WARNING - a PMT message was received that did not contain a 'state' metadata attribute.  File write state will not be changed (Pass state=1 or state=0 to this block to start/stop file recording)" << std::endl;

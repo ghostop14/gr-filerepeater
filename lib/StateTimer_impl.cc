@@ -783,17 +783,16 @@ namespace gr {
     }
 
     void StateTimer_impl::sendMsg(bool state) {
-        pmt::pmt_t meta = pmt::make_dict();
-
+        int newState;
         if (state) {
-            meta = pmt::dict_add(meta, pmt::mp("state"), pmt::mp(1));
+            newState = 1;
         }
         else {
-            meta = pmt::dict_add(meta, pmt::mp("state"), pmt::mp(0));
+            newState = 0;
         }
 
-        pmt::pmt_t pdu = pmt::cons( meta, pmt::PMT_NIL );
-		   message_port_pub(pmt::mp("trigger"),pdu);
+        pmt::pmt_t pdu = pmt::cons( pmt::intern("state"), pmt::from_long(newState) );
+		message_port_pub(pmt::mp("trigger"),pdu);
     }
 
 	void StateTimer_impl::runInitialThread() {

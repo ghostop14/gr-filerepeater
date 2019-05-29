@@ -324,7 +324,7 @@
     </param>
     <param>
       <key>_coordinate</key>
-      <value>(352, 360)</value>
+      <value>(376, 392)</value>
     </param>
     <param>
       <key>_rotation</key>
@@ -438,11 +438,11 @@
     </param>
     <param>
       <key>hours</key>
-      <value>20</value>
+      <value>7</value>
     </param>
     <param>
       <key>minutes</key>
-      <value>15</value>
+      <value>45</value>
     </param>
     <param>
       <key>seconds</key>
