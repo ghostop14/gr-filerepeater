@@ -9,7 +9,7 @@
 	<key>filerepeater_file_repeater_ex</key>
 	<category>[Advanced File]</category>
 	<import>import filerepeater</import>
-	<make>filerepeater.file_repeater_ex($type.size*$vlen, $file, $complexconv, $delayFirstStart,$repeat,$repeat_delay,$repeat_times)</make>
+	<make>filerepeater.file_repeater_ex($type.size*$vlen, $file, $complexconv, $delayFirstStart,$repeat,$repeat_delay,$repeat_times,$verbose)</make>
 	<callback>open($file, $repeat,$repeat_delay,$repeat_times)</callback>
 	<param>
 		<name>File</name>
@@ -106,6 +106,19 @@
 		<key>vlen</key>
 		<value>1</value>
 		<type>int</type>
+	</param>
+	<param>
+		<name>Verbose</name>
+		<key>verbose</key>
+		<type>enum</type>
+		<option>
+			<name>No</name>
+			<key>False</key>
+		</option>
+		<option>
+			<name>Yes</name>
+			<key>True</key>
+		</option>
 	</param>
 	<check>$vlen &gt; 0</check>
 	<check>$delayFirstStart &gt;= 0.0</check>

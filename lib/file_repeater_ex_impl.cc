@@ -53,19 +53,23 @@
 namespace gr {
   namespace filerepeater {
 
-  file_repeater_ex::sptr file_repeater_ex::make(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec, bool repeat, int repeat_delay,int repeat_times)
+  file_repeater_ex::sptr file_repeater_ex::make(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec,
+		  	  	  	  	  	  	  bool repeat, int repeat_delay,int repeat_times, bool verbose)
   {
     return gnuradio::get_initial_sptr
-      (new file_repeater_ex_impl(itemsize, filename, complex_conv, delayFirstStartSec, repeat, repeat_delay,repeat_times));
+      (new file_repeater_ex_impl(itemsize, filename, complex_conv, delayFirstStartSec, repeat, repeat_delay,repeat_times,verbose));
   }
 
-file_repeater_ex_impl::file_repeater_ex_impl(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec, bool repeat, int repeat_delay,int repeat_times)
+file_repeater_ex_impl::file_repeater_ex_impl(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec,
+		bool repeat, int repeat_delay,int repeat_times, bool verbose)
 : sync_block("filerepeater",
 			io_signature::make(0, 0, 0),
 			io_signature::make(1, 1, itemsize)),
 	d_itemsize(itemsize), d_fp(0), d_new_fp(0), d_repeat(repeat),d_repeat_delay(repeat_delay),d_repeat_times(repeat_times),
 	d_updated(false), d_delayFirstStart(delayFirstStartSec),bFirstWorkCall(true),d_complex_conv(complex_conv)
 {
+		d_verbose = verbose;
+
 		if (d_delayFirstStart > 0.0) {
 		  bDelayingFirst = true;
 		}
@@ -313,7 +317,8 @@ bool file_repeater_ex_impl::stop() {
         // Check repeat times and reset the file
     	// std::cout << "DEBUG: Reached end of file." << std::endl;
 
-		std::cout << "[File Repeater] End of file reached." << std::endl;
+    	if (d_verbose)
+    		std::cout << "[File Repeater] End of file reached." << std::endl;
 
         // If we've reached the end and we're not repeating, we're done.
     	if (!d_repeat) {

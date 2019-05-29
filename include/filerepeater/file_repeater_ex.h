@@ -67,7 +67,8 @@ namespace gr {
        * \param repeat_times	repeat number of times to repeat the file (0 for no limit)
        */
       /* static sptr make(size_t itemsize, const char *filename, bool repeat = false); */
-      static sptr make(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec=0.0, bool repeat=false, int repeat_delay=0,int repeat_times=0);
+      static sptr make(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec=0.0, bool repeat=false,
+    		  	  	  int repeat_delay=0,int repeat_times=0, bool verbose=false);
 
       /*!
        * \brief seek file to \p seek_point relative to \p whence

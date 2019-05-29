@@ -66,11 +66,13 @@ namespace gr {
         bool holdingTransmit=false;
 
         bool workDone;
+        bool d_verbose;
 
         void do_update();
 
      public:
-      file_repeater_ex_impl(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec, bool repeat, int repeat_delay, int repeat_times);
+      file_repeater_ex_impl(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec, bool repeat,
+    		  int repeat_delay, int repeat_times, bool verbose);
       ~file_repeater_ex_impl();
 
       bool seek(long seek_point, int whence);
