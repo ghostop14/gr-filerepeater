@@ -35,8 +35,8 @@ class StateMessageAnd(gr.sync_block):
           self.sendState(False)
           self.curState = False
     except Exception as e:
-      print "Error with state1 message: %s" % str(e)
-      print str(meta)    
+      print("Error with state1 message: %s" % str(e))
+      print(str(meta))    
             
   def state2Handler(self, pdu):
     try:    
@@ -56,8 +56,8 @@ class StateMessageAnd(gr.sync_block):
           self.sendState(False)
           self.curState = False
     except Exception as e:
-      print "Error with state2 message: %s" % str(e)
-      print str(meta)    
+      print("Error with state2 message: %s" % str(e))
+      print(str(meta))    
       
   def sendState(self,state):
     if (state):    

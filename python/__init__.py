@@ -22,18 +22,20 @@
 This is the GNU Radio FILEREPEATER module. Place your Python package
 description here (python/__init__.py).
 '''
+from __future__ import unicode_literals
 
 # import swig generated symbols into the filerepeater namespace
 try:
-	# this might fail if the module is python-only
-	from filerepeater_swig import *
+    # this might fail if the module is python-only
+    from .filerepeater_swig import *
 except ImportError:
-	pass
+    pass
 
 # import any pure python here
 #
-from state_and import StateMessageAnd
-from state_or import StateMessageOr
-from StateToBool import StateToBool
-from MsgToFile import MsgToFile
-from MetaToPair import MetaToPair
+from .state_and import StateMessageAnd
+from .state_or import StateMessageOr
+from .StateToBool import StateToBool
+from .MsgToFile import MsgToFile
+from .MetaToPair import MetaToPair
+

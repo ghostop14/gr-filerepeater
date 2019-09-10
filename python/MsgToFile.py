@@ -20,7 +20,7 @@ class MsgToFile(gr.sync_block):
       else:
         self.fp = open(filename,"a",0)
     except Exception as e:
-      print "[MsgToFile] Error opening file: %s" % str(e)
+      print("[MsgToFile] Error opening file: %s" % str(e))
       sys.exit(1)
      
     self.message_port_register_in(pmt.intern("msg"))

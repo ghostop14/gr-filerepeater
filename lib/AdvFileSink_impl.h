@@ -749,8 +749,6 @@ namespace gr {
     		  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered);
       ~AdvFileSink_impl();
 
-      void setup_rpc();
-
       virtual bool stop();
 
       void handlePDU(pmt::pmt_t msg);

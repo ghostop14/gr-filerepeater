@@ -17,17 +17,17 @@ class MetaToPair(gr.sync_block):
 
   def msgHandler(self, msg):
     if not pmt.is_pair(msg):
-      print "[MetaToPair] Incoming message is not a pair."
+      print("[MetaToPair] Incoming message is not a pair.")
       return
       
     meta = pmt.to_python(pmt.car(msg))
     
     if not type(meta) is dict:
-      print "[MetaToPair] ERROR: incoming message does not contain a dictionary."
+      print("[MetaToPair] ERROR: incoming message does not contain a dictionary.")
       return
       
     if not self.incomingKeyName in meta:
-      print "[MetaToPair] ERROR: incoming message dictionary does not contain key %s" % self.incomingKeyName
+      print("[MetaToPair] ERROR: incoming message dictionary does not contain key %s" % self.incomingKeyName)
       return
     
     incomingVal = meta[self.incomingKeyName]
@@ -37,15 +37,15 @@ class MetaToPair(gr.sync_block):
     try:  
     	newPair = pmt.cons(pmt.intern(self.outgoingPairName),pmt.to_pmt(incomingVal))
     except Exception as e:
-      print "[MetaToPair] ERROR: Cannot construct new message: %s" % str(e)
+      print("[MetaToPair] ERROR: Cannot construct new message: %s" % str(e))
       return
     
     try:    
       self.message_port_pub(pmt.intern("outpair"),newPair)
     except Exception as e:
-      print "[MetaToPair] ERROR: Cannot send message: %s" % str(e)
-      print "Incoming dictionary (%s):" % str(type(meta))
-      print str(meta)    
+      print("[MetaToPair] ERROR: Cannot send message: %s" % str(e))
+      print("Incoming dictionary (%s):" % str(type(meta)))
+      print(str(meta))    
     
   def stop(self):
     return True

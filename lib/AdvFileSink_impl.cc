@@ -1271,31 +1271,6 @@ namespace gr {
         return nwritten;
     }
 
-    void
-	AdvFileSink_impl::setup_rpc()
-    {
-#ifdef GR_CTRLPORT
-    	// Getters
-      add_rpc_variable(
-        rpcbasic_sptr(new rpcbasic_register_get<AdvFileSink_impl, float>(
-	  alias(), "CenterFreq",
-	  &AdvFileSink_impl::getCenterFrequency,
-      pmt::mp(0.0), pmt::mp(100.0e6), pmt::mp(0.0),
-      "Hz", "CenterFreq", RPC_PRIVLVL_MIN,
-      DISPTIME | DISPOPTSTRIP)));
-
-      // Setters
-      add_rpc_variable(
-        rpcbasic_sptr(new rpcbasic_register_set<AdvFileSink_impl, float>(
-	  alias(), "CenterFreq",
-	  &AdvFileSink_impl::setCenterFrequency,
-      pmt::mp(0.0), pmt::mp(100.0e6), pmt::mp(0.0),
-      "Hz", "CenterFreq", RPC_PRIVLVL_MIN,
-      DISPTIME | DISPOPTSTRIP)));
-
-#endif /* GR_CTRLPORT */
-    }
-
   } /* namespace filerepeater */
 } /* namespace gr */
 
