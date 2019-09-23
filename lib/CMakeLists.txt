@@ -28,6 +28,7 @@ list(APPEND filerepeater_sources
     AdvFileSink_impl.cc
     file_repeater_ex_impl.cc
     flowsync_impl.cc
+    VectorToTxtFile_impl.cc
 )
 
 set(filerepeater_sources "${filerepeater_sources}" PARENT_SCOPE)
