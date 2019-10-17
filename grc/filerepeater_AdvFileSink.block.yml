@@ -20,7 +20,7 @@ parameters:
     option_labels: [Complex, Float, WAV File (Float), Int, Short, Byte]
     option_attributes:
         datatype: ['1', '2', '6', '3', '4', '5']
-        hide_wav: [all, all, '', all, all, all]
+        hide_wav: [all, all, 'none', all, all, all]
         size: [gr.sizeof_gr_complex, gr.sizeof_float, gr.sizeof_float, gr.sizeof_int,
             gr.sizeof_short, gr.sizeof_char]
         typename: [complex, float, float, int, short, byte]
