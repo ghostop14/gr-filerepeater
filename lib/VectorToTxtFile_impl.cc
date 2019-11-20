@@ -792,7 +792,7 @@ namespace gr {
         gr_vector_void_star &output_items)
     {
         gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
-    	const float *in = (const float *)&input_items[0];
+    	const float *in = (const float *)input_items[0];
 
 		std::chrono::time_point<std::chrono::steady_clock> curTimestamp = std::chrono::steady_clock::now();
 		std::chrono::duration<double> elapsed_seconds = curTimestamp - lastUpdateTime;
