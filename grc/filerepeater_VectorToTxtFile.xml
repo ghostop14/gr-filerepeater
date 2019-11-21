@@ -4,7 +4,7 @@
   <key>filerepeater_VectorToTxtFile</key>
   <category>[Advanced File]</category>
   <import>import filerepeater</import>
-  <make>filerepeater.VectorToTxtFile($filename, $vectorsize, $frequency, $sampleRate, $notes, $append, $updateRateSec, $WriteTimeHeader)</make>
+  <make>filerepeater.VectorToTxtFile($filename, $vectorsize, $frequency, $sampleRate, $notes, $append, $updateRateSec, $precision, $WriteTimeHeader)</make>
 	<param>
 		<name>File</name>
 		<key>filename</key>
@@ -45,6 +45,13 @@
 		<key>updateRateSec</key>
 		<value>30.0</value>
 		<type>float</type>
+	</param>
+	
+	<param>
+		<name>Output Precision</name>
+		<key>precision</key>
+		<value>2</value>
+		<type>int</type>
 	</param>
 
 	<param>
