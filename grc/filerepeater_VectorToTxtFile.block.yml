@@ -28,6 +28,10 @@ parameters:
     label: Update Rate (sec)
     dtype: float
     default: '30.0'
+-   id: precision
+    label: Output Precision
+    dtype: int
+    default: '2'
 -   id: append
     label: Append To File
     dtype: enum
@@ -47,7 +51,7 @@ inputs:
 templates:
     imports: import filerepeater
     make: filerepeater.VectorToTxtFile(${filename}, ${vectorsize}, ${frequency}, ${sampleRate},
-        ${notes}, ${append}, ${updateRateSec}, ${WriteTimeHeader})
+        ${notes}, ${append}, ${updateRateSec}, ${precision}, ${WriteTimeHeader})
 
 documentation: |-
     This block will take a float vector and write it as a comma-separated entry in the specified text file.  Frequency, sample rate, and any desired notes will be added before the first sample.  An optional runtime header can be added before each row in append mode to track how far into a sequence the specific vector is.
