@@ -686,16 +686,16 @@ namespace gr {
   namespace filerepeater {
 
     VectorToTxtFile::sptr
-    VectorToTxtFile::make(const char *filename, int vectorLen, float frequency, float sampleRate, const char *notes, bool append, float updateRateSec, bool WriteTimeHeader)
+    VectorToTxtFile::make(const char *filename, int vectorLen, float frequency, float sampleRate, const char *notes, bool append, float updateRateSec, int precision, bool WriteTimeHeader)
     {
       return gnuradio::get_initial_sptr
-        (new VectorToTxtFile_impl(filename, vectorLen, frequency, sampleRate, notes, append, updateRateSec, WriteTimeHeader));
+        (new VectorToTxtFile_impl(filename, vectorLen, frequency, sampleRate, notes, append, updateRateSec, precision, WriteTimeHeader));
     }
 
     /*
      * The private constructor
      */
-    VectorToTxtFile_impl::VectorToTxtFile_impl(const char *filename, int vectorLen, float frequency, float sampleRate, const char *notes, bool append, float updateRateSec, bool WriteTimeHeader)
+    VectorToTxtFile_impl::VectorToTxtFile_impl(const char *filename, int vectorLen, float frequency, float sampleRate, const char *notes, bool append, float updateRateSec, int precision, bool WriteTimeHeader)
       : gr::sync_block("VectorToTxtFile",
               gr::io_signature::make(1, 1, sizeof(float)*vectorLen),
               gr::io_signature::make(0, 0, 0))
@@ -707,6 +707,7 @@ namespace gr {
 		d_notes = notes;
 		d_append = append;
 		d_updateRateSec = updateRateSec;
+		d_precision = precision;
 		d_writeTimeHeader = WriteTimeHeader;
 
 	    lastUpdateTime = std::chrono::steady_clock::now();
@@ -827,9 +828,9 @@ namespace gr {
 
 				for (int i=0;i<d_vectorLen;i++) {
 					if (i < (d_vectorLen-1))
-						fprintf(d_fp,"%f,",in[i]);
+						fprintf(d_fp,"%.*f,", d_precision, in[i]);
 					else {
-						fprintf(d_fp,"%f\n",in[i]);
+						fprintf(d_fp,"%.*f,", d_precision, in[i]);
 					}
 				}
 			}

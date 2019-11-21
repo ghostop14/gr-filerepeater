@@ -13,6 +13,7 @@
 #include "filerepeater/AdvFileSink.h"
 #include "filerepeater/file_repeater_ex.h"
 #include "filerepeater/flowsync.h"
+#include "filerepeater/VectorToTxtFile.h"
 %}
 
 %include "filerepeater/StateTimer.h"
@@ -25,3 +26,5 @@ GR_SWIG_BLOCK_MAGIC2(filerepeater, AdvFileSink);
 GR_SWIG_BLOCK_MAGIC2(filerepeater, file_repeater_ex);
 %include "filerepeater/flowsync.h"
 GR_SWIG_BLOCK_MAGIC2(filerepeater, flowsync);
+%include "filerepeater/VectorToTxtFile.h"
+GR_SWIG_BLOCK_MAGIC2(filerepeater, VectorToTxtFile);

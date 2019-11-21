@@ -697,6 +697,7 @@ namespace gr {
 		string d_notes;
 		bool d_append;
 		float d_updateRateSec;
+		int d_precision;
 		bool d_writeTimeHeader;
 
    	 	std::chrono::time_point<std::chrono::steady_clock> lastUpdateTime;
@@ -711,7 +712,7 @@ namespace gr {
     	string setTwoDigit(string& numStr);
 
      public:
-      VectorToTxtFile_impl(const char *filename, int vectorLen, float frequency, float sampleRate, const char *notes, bool append, float updateRateSec, bool WriteTimeHeader);
+      VectorToTxtFile_impl(const char *filename, int vectorLen, float frequency, float sampleRate, const char *notes, bool append, float updateRateSec, int precision, bool WriteTimeHeader);
       ~VectorToTxtFile_impl();
 
       virtual bool stop();
