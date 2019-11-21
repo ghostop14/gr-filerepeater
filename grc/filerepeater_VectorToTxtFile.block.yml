@@ -12,7 +12,7 @@ parameters:
     label: Vector Size
     dtype: int
     default: '1024'
-    hide: 'none'
+    hide: ${ 'part' if vectorsize == 1 else 'none' }
 -   id: frequency
     label: Frequency
     dtype: float
