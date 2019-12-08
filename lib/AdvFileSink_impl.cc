@@ -832,8 +832,12 @@ namespace gr {
 
 			d_currentState = open(newFilename.c_str());
 
-			if (!d_currentState)
-		        throw std::runtime_error ("[Advanced File Sink] can't open file");
+			if (!d_currentState) {
+				std::cout << "[Advanced File Sink] ERROR: can't open file " << newFilename << std::endl;
+				string errmsg = "[Advanced File Sink] can't open initial file ";
+				errmsg += newFilename;
+		        throw std::runtime_error (errmsg);
+			}
         }
     }
 
@@ -862,24 +866,20 @@ namespace gr {
     	if (d_autoStartFreqChange)
     		d_currentState = true;
 
-		// Only if we're honoring the callback
+		// Only if we're honoring the frequency change for the filename
     	d_frequency = newValue;
 
+    	// If we're honoring the change, let's close any open file.
+    	// But... we're going to delay opening the new one until we need it (see the work function)
     	if (d_currentState) {
-    		// We're recording, so we're going to have to rotate the file.
-			string newFilename = buildFileName();
-
 			// Close the file if we're currently recording
 	    	if (d_fp) {
 	    		close();
+	    		// close resets d_currentState to false.  Reset it high here.
+	    		d_currentState = true;
 	    	}
-
-			d_currentState = open(newFilename.c_str());
-
-			if (!d_currentState)
-		        throw std::runtime_error ("[Advanced File Sink] can't open file");
     	}
-    }
+     }
 
 
     string AdvFileSink_impl::setTwoDigit(string& numStr) {
@@ -977,6 +977,7 @@ namespace gr {
       */
       if((fd = ::open(filename, flags, 0664)) < 0){
         perror(filename);
+        std::cout << "[Advanced File Sink] Error in initial 0664 open" << std::endl;
         return false;
       }
       if(d_fp) {		// if we've already got a new one open, close it
@@ -987,6 +988,8 @@ namespace gr {
       if((d_fp = fdopen (fd, "wb")) == NULL) {
         perror (filename);
         ::close(fd);        // don't leak file descriptor if fdopen fails.
+        std::cout << "[Advanced File Sink] Error: open-for-write returned NULL" << std::endl;
+        return false;
       }
 
       if (d_datatype == AFS_DATATYPE_WAV) {
@@ -1056,10 +1059,22 @@ namespace gr {
         gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
 
         if(!d_fp) {
-        	if (d_currentState)
-        		std::cout << "[Advanced File Sink] INFO - MsgStream called and we should be writing, but file is closed." << std::endl;
+        	if (d_currentState) {
+	    		// We're recording, but the 'new' file hasn't been opened yet.  Open it here.
+				string newFilename = buildFileName();
 
-            return;         // drop output on the floor
+				d_currentState = open(newFilename.c_str());
+
+				if (!d_currentState) {
+			        throw std::runtime_error ("[Advanced File Sink] can't open file");
+			        std::cout << "[Advanced File Sink] INFO - Work called and we should be writing, but the file " << newFilename <<
+			        		" could not be opened." << std::endl;
+
+		            return;         // drop output on the floor
+				}
+        	}
+        	else
+        		return;
         }
 
         char *inbuf;
@@ -1165,10 +1180,22 @@ namespace gr {
         gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
 
         if(!d_fp) {
-        	if (d_currentState)
-        		std::cout << "[Advanced File Sink] INFO - Work called and we should be writing, but file is closed." << std::endl;
+        	if (d_currentState) {
+	    		// We're recording, but the 'new' file hasn't been opened yet.  Open it here.
+				string newFilename = buildFileName();
 
-            return noutput_items;         // drop output on the floor
+				d_currentState = open(newFilename.c_str());
+
+				if (!d_currentState) {
+			        std::cout << "[Advanced File Sink] INFO - Work called and we should be writing, but the file " << newFilename <<
+			        		" could not be opened." << std::endl;
+
+			        // throw std::runtime_error ("[Advanced File Sink] can't open file");
+		            return noutput_items;         // drop output on the floor
+				}
+        	}
+        	else
+        		return noutput_items;
         }
 
         if (d_freqCallback) {
