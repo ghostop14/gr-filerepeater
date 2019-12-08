@@ -703,15 +703,18 @@ namespace gr {
        * class. filerepeater::AdvFileSink::make is the public interface for
        * creating new instances.
        */
-      static sptr make(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
+      static sptr make(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, float sampleRate,
     		  	  	  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample,
 					  bool bUnbuffered, bool honorFreqTags);
 
-      virtual float getCenterFrequency() const = 0;
-      virtual void setCenterFrequency(float newValue) = 0;
+      virtual double getCenterFrequency() const = 0;
+      virtual void setCenterFrequency(double newValue) = 0;
 
-      virtual float getTest() const =0;
-      virtual void setTest(float newValue) =0;
+      virtual double getTest() const =0;
+      virtual void setTest(double newValue) =0;
+
+      virtual float getTestFloat() const =0;
+      virtual void setTestFloat(float newValue) =0;
     };
 
   } // namespace filerepeater

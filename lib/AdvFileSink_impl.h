@@ -717,9 +717,10 @@ namespace gr {
         long d_bytesWritten;
 
         float d_sampleRate;
-        float d_frequency;
+        double d_frequency;
 
-        float d_test;
+        double d_test = 0.0;
+        float d_testfloat = 0.0;
 
         bool d_freqCallback;
         bool d_autoStartFreqChange;
@@ -748,7 +749,7 @@ namespace gr {
     	short int convert_to_short(float sample);
 
      public:
-      AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
+      AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, float sampleRate,
     		  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample,
 			  bool bUnbuffered,bool honorFreqTags);
       ~AdvFileSink_impl();
@@ -758,11 +759,14 @@ namespace gr {
       void handlePDU(pmt::pmt_t msg);
       void handleMsgStream(pmt::pmt_t msg);
 
-      virtual float getCenterFrequency() const;
-      virtual void setCenterFrequency(float newValue);
+      virtual double getCenterFrequency() const;
+      virtual void setCenterFrequency(double newValue);
 
-      virtual float getTest() const {return d_test;};
-      virtual void setTest(float newValue) { d_test = newValue; };
+      virtual double getTest() const {return d_test;};
+      virtual void setTest(double newValue) { d_test = newValue; };
+
+      virtual float getTestFloat() const {return d_testfloat;};
+      virtual void setTestFloat(float newValue) { d_testfloat = newValue; };
 
       // Where all the action really happens
       int work(int noutput_items,

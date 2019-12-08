@@ -716,7 +716,7 @@ namespace gr {
   namespace filerepeater {
 
     AdvFileSink::sptr
-    AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
+    AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, float sampleRate,
     		long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample,
 			bool bUnbuffered,bool honorFreqTags)
     {
@@ -728,7 +728,7 @@ namespace gr {
     /*
      * The private constructor
      */
-    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec,
+    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, float sampleRate, long maxSize, long maxTimeSec,
     		bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered,bool honorFreqTags)
       : gr::sync_block("AdvFileSink",
               gr::io_signature::make(0, 1, itemsize),
@@ -857,11 +857,11 @@ namespace gr {
     	close();
     }
 
-    float AdvFileSink_impl::getCenterFrequency() const {
+    double AdvFileSink_impl::getCenterFrequency() const {
     	return d_frequency;
     }
 
-    void AdvFileSink_impl::setCenterFrequency(float newValue) {
+    void AdvFileSink_impl::setCenterFrequency(double newValue) {
     	//std::cout << "[DEBUG] d_frequency=" << std::fixed << std::setw(11) << std::setprecision(2) << newValue << std::endl;
     	//printf("[DEBUG] d_frequency=%.2f\n",newValue);
 
