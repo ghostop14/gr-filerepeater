@@ -717,23 +717,26 @@ namespace gr {
 
     AdvFileSink::sptr
     AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
-    		long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered)
+    		long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample,
+			bool bUnbuffered,bool honorFreqTags)
     {
       return gnuradio::get_initial_sptr
-        (new AdvFileSink_impl(datatype, itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately, freqCallback, autostartFreqChange, bits_per_sample, bUnbuffered));
+        (new AdvFileSink_impl(datatype, itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately,
+        		freqCallback, autostartFreqChange, bits_per_sample, bUnbuffered, honorFreqTags));
     }
 
     /*
      * The private constructor
      */
     AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate, long maxSize, long maxTimeSec,
-    		bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered)
+    		bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered,bool honorFreqTags)
       : gr::sync_block("AdvFileSink",
               gr::io_signature::make(0, 1, itemsize),
               gr::io_signature::make(0, 0, 0))
     {
     	// Set Variables
     	d_datatype = datatype;
+    	d_honorFreqTags = honorFreqTags;
 
     	d_currentState = false;
 
@@ -900,6 +903,10 @@ namespace gr {
     	// Base Directory + base name + sample rate + frequency + YYYY_MM_DD + HH-MM-SS .iq
 
     	string sFreq = to_string((long)d_frequency);
+    	/*
+    	std::cout << "[DEBUG] d_frequency=" << std::fixed << std::setw(11) << std::setprecision(6) << d_frequency << std::endl;
+    	std::cout << "[DEBUG] sFreq=" << sFreq << std::endl;
+		*/
     	string sRate = to_string((long)d_sampleRate);
 
     	time_t t = time(NULL);
@@ -1198,7 +1205,7 @@ namespace gr {
         		return noutput_items;
         }
 
-        if (d_freqCallback) {
+        if (d_freqCallback && d_honorFreqTags) {
         	std::vector<tag_t> tags;
         	get_tags_in_range(tags,0,0,noutput_items-1,pmt::intern("freq"));
 

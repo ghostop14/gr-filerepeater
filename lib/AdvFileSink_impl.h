@@ -699,6 +699,7 @@ namespace gr {
      private:
       // Nothing to declare in this block.
     	bool d_currentState;
+    	bool d_honorFreqTags;
 
     	bool d_useTime;
     	bool d_useSize;
@@ -746,7 +747,8 @@ namespace gr {
 
      public:
       AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, float freq, float sampleRate,
-    		  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered);
+    		  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample,
+			  bool bUnbuffered,bool honorFreqTags);
       ~AdvFileSink_impl();
 
       virtual bool stop();

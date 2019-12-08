@@ -66,6 +66,11 @@ parameters:
     dtype: enum
     options: ['False', 'True']
     option_labels: ['Yes', 'No']
+-   id: honorFreqTags
+    label: Honor Freq Tags
+    dtype: enum
+    options: ['False', 'True']
+    option_labels: ['No', 'Yes']
 -   id: vlen
     label: Vec Length
     dtype: int
@@ -90,7 +95,7 @@ templates:
     imports: import filerepeater
     make: filerepeater.AdvFileSink(${type.datatype}, ${type.size}*${vlen}, ${basedir},
         ${basefile}, ${radioCenterFreq}, ${sampleRate}, ${maxSize}, ${maxTimeSec},${recordOnStart},${honorFreqChange},${autostartFreqChange},
-        ${bits_per_sample},${unbuffered})
+        ${bits_per_sample},${unbuffered},${honorFreqTags})
     callbacks:
     - setCenterFrequency(${radioCenterFreq})
 
