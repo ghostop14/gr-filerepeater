@@ -719,6 +719,8 @@ namespace gr {
         float d_sampleRate;
         float d_frequency;
 
+        float d_test;
+
         bool d_freqCallback;
         bool d_autoStartFreqChange;
 
@@ -758,6 +760,9 @@ namespace gr {
 
       virtual float getCenterFrequency() const;
       virtual void setCenterFrequency(float newValue);
+
+      virtual float getTest() const {return d_test;};
+      virtual void setTest(float newValue) { d_test = newValue; };
 
       // Where all the action really happens
       int work(int noutput_items,

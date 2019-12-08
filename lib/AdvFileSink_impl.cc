@@ -862,6 +862,9 @@ namespace gr {
     }
 
     void AdvFileSink_impl::setCenterFrequency(float newValue) {
+    	//std::cout << "[DEBUG] d_frequency=" << std::fixed << std::setw(11) << std::setprecision(2) << newValue << std::endl;
+    	//printf("[DEBUG] d_frequency=%.2f\n",newValue);
+
     	if (!d_freqCallback) {
     		return;
     	}
