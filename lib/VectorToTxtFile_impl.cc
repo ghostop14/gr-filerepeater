@@ -830,7 +830,7 @@ namespace gr {
 					if (i < (d_vectorLen-1))
 						fprintf(d_fp,"%.*f,", d_precision, in[i]);
 					else {
-						fprintf(d_fp,"%.*f\n,", d_precision, in[i]);
+						fprintf(d_fp,"%.*f\n", d_precision, in[i]);
 					}
 				}
 			}
