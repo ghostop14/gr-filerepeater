@@ -36,7 +36,7 @@ namespace gr {
     class FILEREPEATER_API file_repeater_ex : virtual public gr::sync_block
     {
      public:
-      typedef boost::shared_ptr<file_repeater_ex> sptr;
+      typedef std::shared_ptr<file_repeater_ex> sptr;
 
       /*!
        * \brief Return a shared_ptr to a new instance of filerepeater::file_repeater_ex.

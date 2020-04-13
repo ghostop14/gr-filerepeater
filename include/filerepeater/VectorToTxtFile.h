@@ -693,7 +693,7 @@ namespace gr {
     class FILEREPEATER_API VectorToTxtFile : virtual public gr::sync_block
     {
      public:
-      typedef boost::shared_ptr<VectorToTxtFile> sptr;
+      typedef std::shared_ptr<VectorToTxtFile> sptr;
 
       /*!
        * \brief Return a shared_ptr to a new instance of filerepeater::VectorToTxtFile.

@@ -693,7 +693,7 @@ namespace gr {
     class FILEREPEATER_API TimeOfDay : virtual public gr::sync_block
     {
      public:
-      typedef boost::shared_ptr<TimeOfDay> sptr;
+      typedef std::shared_ptr<TimeOfDay> sptr;
 
       /*!
        * \brief Return a shared_ptr to a new instance of filerepeater::TimeOfDay.

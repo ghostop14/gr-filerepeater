@@ -693,7 +693,7 @@ namespace gr {
     class FILEREPEATER_API StateTimer : virtual public gr::sync_block
     {
      public:
-      typedef boost::shared_ptr<StateTimer> sptr;
+      typedef std::shared_ptr<StateTimer> sptr;
 
       /*!
        * \brief Return a shared_ptr to a new instance of filerepeater::StateTimer.

@@ -693,7 +693,7 @@ namespace gr {
     class FILEREPEATER_API AdvFileSink : virtual public gr::sync_block
     {
      public:
-      typedef boost::shared_ptr<AdvFileSink> sptr;
+      typedef std::shared_ptr<AdvFileSink> sptr;
 
       /*!
        * \brief Return a shared_ptr to a new instance of filerepeater::AdvFileSink.
