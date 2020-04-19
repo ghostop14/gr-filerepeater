@@ -43,7 +43,7 @@ list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
 # Set the version information here
 set(VERSION_MAJOR 3)
-set(VERSION_API    0)
+set(VERSION_API    9)
 set(VERSION_ABI 0)
 set(VERSION_PATCH git)
 
@@ -85,14 +85,7 @@ ENDIF()
 ########################################################################
 # Install directories
 ########################################################################
-# find_package(Gnuradio "3.8" REQUIRED)
-find_package(Gnuradio "3.8")
-if(NOT Gnuradio_FOUND)
-    find_package(Gnuradio "3.9")
-	if(NOT Gnuradio_FOUND)
-	    message(FATAL_ERROR "Unable to find GNURadio 3.8 or 3.9")
-	ENDIF(NOT Gnuradio_FOUND)
-ENDIF(NOT Gnuradio_FOUND)
+find_package(Gnuradio "3.9" REQUIRED)
 include(GrVersion)
 
 include(GrPlatform) #define LIB_SUFFIX

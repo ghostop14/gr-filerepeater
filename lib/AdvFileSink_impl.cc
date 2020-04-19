@@ -825,9 +825,9 @@ namespace gr {
 
     	// Set up messages
 		message_port_register_in(pmt::mp("recordstate"));
-        set_msg_handler(pmt::mp("recordstate"), boost::bind(&AdvFileSink_impl::handlePDU, this, _1) );
+        set_msg_handler(pmt::mp("recordstate"), [this](pmt::pmt_t msg) { this->handlePDU(msg); } );
 		message_port_register_in(pmt::mp("data_in"));
-        set_msg_handler(pmt::mp("data_in"), boost::bind(&AdvFileSink_impl::handleMsgStream, this, _1) );
+        set_msg_handler(pmt::mp("data_in"), [this](pmt::pmt_t msg) { this->handleMsgStream(msg); } );
 
         if (startRecordingImmediately) {
         	// We want to start in a recording state.
