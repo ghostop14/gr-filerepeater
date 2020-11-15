@@ -716,7 +716,7 @@ namespace gr {
   namespace filerepeater {
 
     AdvFileSink::sptr
-    AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, float sampleRate,
+    AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, double sampleRate,
     		long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample,
 			bool bUnbuffered,bool honorFreqTags)
     {
@@ -728,7 +728,7 @@ namespace gr {
     /*
      * The private constructor
      */
-    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, float sampleRate, long maxSize, long maxTimeSec,
+    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, double sampleRate, long maxSize, long maxTimeSec,
     		bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered,bool honorFreqTags)
       : gr::sync_block("AdvFileSink",
               gr::io_signature::make(0, 1, itemsize),

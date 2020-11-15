@@ -716,7 +716,7 @@ namespace gr {
 
         long d_bytesWritten;
 
-        float d_sampleRate;
+        double d_sampleRate;
         double d_frequency;
 
         double d_test = 0.0;
@@ -749,7 +749,7 @@ namespace gr {
     	short int convert_to_short(float sample);
 
      public:
-      AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, float sampleRate,
+      AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, double sampleRate,
     		  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample,
 			  bool bUnbuffered,bool honorFreqTags);
       ~AdvFileSink_impl();
