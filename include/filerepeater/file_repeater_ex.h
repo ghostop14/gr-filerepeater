@@ -65,6 +65,7 @@ namespace gr {
        * \param repeat	repeat file from start
        * \param repeat_delay	ms to wait before starting to transmit the file again (0 for continuous)
        * \param repeat_times	repeat number of times to repeat the file (0 for no limit)
+       * \param verbose	print additional details
        */
       /* static sptr make(size_t itemsize, const char *filename, bool repeat = false); */
       static sptr make(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec=0.0, bool repeat=false,
