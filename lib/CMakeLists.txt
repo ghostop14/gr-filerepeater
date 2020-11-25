@@ -58,6 +58,21 @@ include(GrMiscUtils)
 GR_LIBRARY_FOO(gnuradio-filerepeater)
 
 ########################################################################
+# Build and register test-filethroughput
+########################################################################
+list(APPEND test_filethroughput_sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/test-filethroughput.cc
+)
+
+add_executable(test-filethroughput ${test_filethroughput_sources})
+
+target_link_libraries(
+  test-filethroughput
+)
+
+install(TARGETS test-filethroughput DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" RUNTIME)
+
+########################################################################
 # Print summary
 ########################################################################
 message(STATUS "Using install prefix: ${CMAKE_INSTALL_PREFIX}")
