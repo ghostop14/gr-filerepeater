@@ -51,7 +51,7 @@
 #endif
 
 std::string test_file = "/tmp/test_file.bin";
-long num_items = 16384;
+long num_items = 65536;
 int iterations = 200;
 
 class comma_numpunct : public std::numpunct<char>
@@ -70,7 +70,7 @@ class comma_numpunct : public std::numpunct<char>
 
 
 // Doubles were chosen here to simulate float complex (both being 8 bytes wide).
-size_t bufferToFile(FILE *d_fp, const char *filename, double *buffer, long long unsigned int length) {
+size_t bufferToFile_blocks(FILE *d_fp, const char *filename, double *buffer, long long unsigned int length) {
 	// Write the data
     char *inbuf = (char*)buffer;
     size_t nwritten = 0;
@@ -95,6 +95,23 @@ size_t bufferToFile(FILE *d_fp, const char *filename, double *buffer, long long 
     }
 
 	return nwritten;
+}
+
+size_t bufferToFile(FILE *d_fp, const char *filename, double *buffer, long long unsigned int length) {
+	// Write the data
+    char *inbuf = (char*)buffer;
+    size_t nwritten = 0;
+    int d_itemsize = sizeof(double);
+
+    long count = fwrite(inbuf, length*d_itemsize, 1, d_fp);
+    if(count == 0) {
+  	  // Error condition, nothing written for some reason.
+      if(ferror(d_fp)) {
+        printf("file write error.\n");
+      }
+    }
+
+	return length;
 }
 
 bool testWrite() {
