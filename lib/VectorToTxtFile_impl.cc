@@ -686,7 +686,7 @@ namespace gr {
   namespace filerepeater {
 
     VectorToTxtFile::sptr
-    VectorToTxtFile::make(const char *filename, int vectorLen, float frequency, float sampleRate, const char *notes, bool append, float updateRateSec, int precision, bool WriteTimeHeader)
+    VectorToTxtFile::make(const char *filename, int vectorLen, double frequency, double sampleRate, const char *notes, bool append, float updateRateSec, int precision, bool WriteTimeHeader)
     {
       return gnuradio::get_initial_sptr
         (new VectorToTxtFile_impl(filename, vectorLen, frequency, sampleRate, notes, append, updateRateSec, precision, WriteTimeHeader));
@@ -695,7 +695,7 @@ namespace gr {
     /*
      * The private constructor
      */
-    VectorToTxtFile_impl::VectorToTxtFile_impl(const char *filename, int vectorLen, float frequency, float sampleRate, const char *notes, bool append, float updateRateSec, int precision, bool WriteTimeHeader)
+    VectorToTxtFile_impl::VectorToTxtFile_impl(const char *filename, int vectorLen, double frequency, double sampleRate, const char *notes, bool append, float updateRateSec, int precision, bool WriteTimeHeader)
       : gr::sync_block("VectorToTxtFile",
               gr::io_signature::make(1, 1, sizeof(float)*vectorLen),
               gr::io_signature::make(0, 0, 0))
