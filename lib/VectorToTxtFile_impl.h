@@ -692,8 +692,8 @@ namespace gr {
      private:
     	string d_filename;
 		int d_vectorLen;
-		float d_frequency;
-		float d_sampleRate;
+		double d_frequency;
+		double d_sampleRate;
 		string d_notes;
 		bool d_append;
 		float d_updateRateSec;
@@ -712,7 +712,7 @@ namespace gr {
     	string setTwoDigit(string& numStr);
 
      public:
-      VectorToTxtFile_impl(const char *filename, int vectorLen, float frequency, float sampleRate, const char *notes, bool append, float updateRateSec, int precision, bool WriteTimeHeader);
+      VectorToTxtFile_impl(const char *filename, int vectorLen, double frequency, double sampleRate, const char *notes, bool append, float updateRateSec, int precision, bool WriteTimeHeader);
       ~VectorToTxtFile_impl();
 
       virtual bool stop();

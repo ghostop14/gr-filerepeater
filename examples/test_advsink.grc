@@ -1,6 +1,7 @@
 options:
   parameters:
     author: ''
+    catch_exceptions: 'True'
     category: '[GRC Hier Blocks]'
     cmake_opt: ''
     comment: ''
@@ -22,7 +23,6 @@ options:
     sizing_mode: fixed
     thread_safe_setters: ''
     title: ''
-    window_size: ''
   states:
     bus_sink: false
     bus_source: false
@@ -102,11 +102,12 @@ blocks:
     affinity: ''
     alias: ''
     autostartFreqChange: 'False'
-    basedir: /opt/tmp
+    basedir: /tmp
     basefile: sink_test
     bits_per_sample: '8'
     comment: ''
     honorFreqChange: 'False'
+    honorFreqTags: 'False'
     maxSize: '0'
     maxTimeSec: '0'
     radioCenterFreq: radio_freq

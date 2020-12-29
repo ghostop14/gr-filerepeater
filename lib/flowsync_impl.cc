@@ -675,58 +675,52 @@
  * <http://www.gnu.org/philosophy/why-not-lgpl.html>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <gnuradio/io_signature.h>
 #include "flowsync_impl.h"
 
 namespace gr {
-  namespace filerepeater {
+namespace filerepeater {
 
-    flowsync::sptr
-    flowsync::make(int datasize, int nconnections)
-    {
-      return gnuradio::get_initial_sptr
-        (new flowsync_impl(datasize,nconnections));
-    }
+flowsync::sptr flowsync::make(int datasize, int nconnections)
+{
+	return gnuradio::make_block_sptr<flowsync_impl>(datasize, nconnections);
+}
 
-    /*
-     * The private constructor
-     */
-    flowsync_impl::flowsync_impl(int datasize, int nconnections)
-      : gr::sync_block("flowsync",
-              gr::io_signature::make(nconnections,nconnections, datasize),
-              gr::io_signature::make(nconnections,nconnections, datasize)),
-			  d_datasize(datasize),d_nconnections(nconnections)
-    {
+/*
+ * The private constructor
+ */
+flowsync_impl::flowsync_impl(int datasize, int nconnections)
+: gr::sync_block("flowsync",
+		gr::io_signature::make(nconnections,nconnections, datasize),
+		gr::io_signature::make(nconnections,nconnections, datasize)),
+		d_datasize(datasize),d_nconnections(nconnections)
+{
 
-    }
+}
 
-    /*
-     * Our virtual destructor.
-     */
-    flowsync_impl::~flowsync_impl()
-    {
-    }
+/*
+ * Our virtual destructor.
+ */
+flowsync_impl::~flowsync_impl()
+{
+}
 
-    int
-    flowsync_impl::work(int noutput_items,
-        gr_vector_const_void_star &input_items,
-        gr_vector_void_star &output_items)
-    {
-    	for (int i=0;i<d_nconnections;i++) {
-    	      const char *in = (const char *) input_items[i];
-    	      char *out = (char *) output_items[i];
+int
+flowsync_impl::work(int noutput_items,
+		gr_vector_const_void_star &input_items,
+		gr_vector_void_star &output_items)
+{
+	for (int i=0;i<d_nconnections;i++) {
+		const char *in = (const char *) input_items[i];
+		char *out = (char *) output_items[i];
 
-    	      memcpy((void *)out,(const void *)in,d_datasize*noutput_items);
-    	}
+		memcpy((void *)out,(const void *)in,d_datasize*noutput_items);
+	}
 
-      // Tell runtime system how many output items we produced.
-      return noutput_items;
-    }
+	// Tell runtime system how many output items we produced.
+	return noutput_items;
+}
 
-  } /* namespace filerepeater */
+} /* namespace filerepeater */
 } /* namespace gr */
 

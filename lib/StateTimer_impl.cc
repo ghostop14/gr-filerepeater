@@ -675,230 +675,226 @@
  * <http://www.gnu.org/philosophy/why-not-lgpl.html>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <gnuradio/io_signature.h>
 #include "StateTimer_impl.h"
 #include <time.h>
 
 namespace gr {
-  namespace filerepeater {
+namespace filerepeater {
 
-    StateTimer::sptr
-    StateTimer::make(float delayBeforeStart, float triggerTime, float cycleTime)
-    {
-      return gnuradio::get_initial_sptr
-        (new StateTimer_impl(delayBeforeStart, triggerTime, cycleTime));
-    }
+StateTimer::sptr
+StateTimer::make(float delayBeforeStart, float triggerTime, float cycleTime)
+{
+	return gnuradio::make_block_sptr<StateTimer_impl>(
+			delayBeforeStart, triggerTime, cycleTime);
+}
 
-    /*
-     * The private constructor
-     */
-    StateTimer_impl::StateTimer_impl(float delayBeforeStart, float triggerTime, float cycleTime)
-      : gr::sync_block("StateTimer",
-              gr::io_signature::make(0, 0, 0),
-              gr::io_signature::make(0, 0, sizeof(float)))
-    {
-    	curState = false;
-    	d_startInitialized = false;
-    	stopThreads = false;
-    	triggerThreadRunning = false;
-    	cycleThreadRunning = false;
-    	initialThreadRunning = false;
+/*
+ * The private constructor
+ */
+StateTimer_impl::StateTimer_impl(float delayBeforeStart, float triggerTime, float cycleTime)
+: gr::sync_block("StateTimer",
+		gr::io_signature::make(0, 0, 0),
+		gr::io_signature::make(0, 0, sizeof(float)))
+{
+	curState = false;
+	d_startInitialized = false;
+	stopThreads = false;
+	triggerThreadRunning = false;
+	cycleThreadRunning = false;
+	initialThreadRunning = false;
 
-    	d_initialDelay = delayBeforeStart;
+	d_initialDelay = delayBeforeStart;
 
-    	// Need to get out of the constructor here to let things start so if there's no initial delay
-    	// We're just going to short delay it.
-    	if (d_initialDelay <= 0.0)
-    		d_initialDelay = 0.005;
+	// Need to get out of the constructor here to let things start so if there's no initial delay
+	// We're just going to short delay it.
+	if (d_initialDelay <= 0.0)
+		d_initialDelay = 0.005;
 
-    	d_triggerDelay = triggerTime;
-    	d_cycleDelay = cycleTime;
+	d_triggerDelay = triggerTime;
+	d_cycleDelay = cycleTime;
 
-    	if (d_triggerDelay > d_cycleDelay) {
-    		std::cout << "[State Timer] ERROR: trigger time cannot be longer than the cycle time." << std::endl;
-    		throw std::runtime_error("[State Timer] ERROR: trigger time cannot be longer than the cycle time.");
+	if (d_triggerDelay > d_cycleDelay) {
+		std::cout << "[State Timer] ERROR: trigger time cannot be longer than the cycle time." << std::endl;
+		throw std::runtime_error("[State Timer] ERROR: trigger time cannot be longer than the cycle time.");
 
-    	}
-    	blockStartTime = std::chrono::steady_clock::now();
+	}
+	blockStartTime = std::chrono::steady_clock::now();
 
-        message_port_register_out(pmt::mp("trigger"));
+	message_port_register_out(pmt::mp("trigger"));
 
-        // Setup complete, get the threads going.
-    	if (d_initialDelay <= 0.0) {
-    		initialDelayThread = NULL;
-    		StartThreads();
-    	}
-    	else {
-    		triggerThread = NULL;
-    		cycleThread = NULL;
-        	initialDelayThread = new boost::thread(boost::bind(&StateTimer_impl::runInitialThread, this));
-    	}
-    }
+	// Setup complete, get the threads going.
+	if (d_initialDelay <= 0.0) {
+		initialDelayThread = NULL;
+		StartThreads();
+	}
+	else {
+		triggerThread = NULL;
+		cycleThread = NULL;
+		initialDelayThread = new boost::thread(boost::bind(&StateTimer_impl::runInitialThread, this));
+	}
+}
 
-    void StateTimer_impl::StartThreads(void) {
-    	triggerThread = new boost::thread(boost::bind(&StateTimer_impl::runTriggerThread, this));
+void StateTimer_impl::StartThreads(void) {
+	triggerThread = new boost::thread(boost::bind(&StateTimer_impl::runTriggerThread, this));
 
-    	if (d_triggerDelay < d_cycleDelay)
-    		cycleThread = new boost::thread(boost::bind(&StateTimer_impl::runCycleThread, this));
-    }
+	if (d_triggerDelay < d_cycleDelay)
+		cycleThread = new boost::thread(boost::bind(&StateTimer_impl::runCycleThread, this));
+}
 
-    bool StateTimer_impl::stop() {
-    	// Signal stop
-		stopThreads = true;
+bool StateTimer_impl::stop() {
+	// Signal stop
+	stopThreads = true;
 
-		// Wait for all threads to terminate
-		while (cycleThreadRunning || triggerThreadRunning || initialThreadRunning) {
-			usleep(1000); // sleep 1 millisec
-		}
-
-		// clean up
-		if (initialDelayThread) {
-			delete initialDelayThread;
-			initialDelayThread = NULL;
-		}
-
-		if (cycleThread) {
-			delete cycleThread;
-			cycleThread = NULL;
-		}
-
-		if (triggerThread) {
-			delete triggerThread;
-			triggerThread = NULL;
-		}
-
-		return true;
-    }
-
-    /*
-     * Our virtual destructor.
-     */
-    StateTimer_impl::~StateTimer_impl()
-    {
-    	bool retVal = stop();
-    }
-
-    void StateTimer_impl::sendMsg(bool state) {
-        int newState;
-        if (state) {
-            newState = 1;
-        }
-        else {
-            newState = 0;
-        }
-
-        pmt::pmt_t pdu = pmt::cons( pmt::intern("state"), pmt::from_long(newState) );
-		message_port_pub(pmt::mp("trigger"),pdu);
-    }
-
-	void StateTimer_impl::runInitialThread() {
-    	initialThreadRunning = true;
-
-		std::chrono::time_point<std::chrono::steady_clock> curTimestamp = std::chrono::steady_clock::now();
-		std::chrono::duration<double> elapsed_seconds = curTimestamp-blockStartTime;
-
-    	while (!stopThreads && elapsed_seconds.count() < (double)d_initialDelay) {
-    		usleep(1000); // 1 ms sleep
-    		curTimestamp = std::chrono::steady_clock::now();
-    		elapsed_seconds = curTimestamp-blockStartTime;
-    	}
-
-    	initialThreadRunning = false;
-
-    	if (!stopThreads) {
-        	StartThreads();
-    	}
+	// Wait for all threads to terminate
+	while (cycleThreadRunning || triggerThreadRunning || initialThreadRunning) {
+		usleep(1000); // sleep 1 millisec
 	}
 
-	void StateTimer_impl::runTriggerThread() {
-    	triggerThreadRunning = true;
-
-    	std::chrono::time_point<std::chrono::steady_clock> curTimestamp;
-		std::chrono::duration<double> elapsed_seconds;
-
-    	triggerStartTime = std::chrono::steady_clock::now();
-    	cycleStartTime = triggerStartTime;
-
-    	// Send the initial high
-		curState = true;
-		sendMsg(curState);
-
-    	while (!stopThreads) {
-    		curTimestamp = std::chrono::steady_clock::now();
-    		elapsed_seconds = curTimestamp-triggerStartTime;
-
-    		// If we're past the end of a trigger cycle and we were high
-    		if (elapsed_seconds.count() >= (double)d_triggerDelay) {
-		        gr::thread::scoped_lock lock(d_mutex);
-    			if (curState) {
-        			curState = false;
-        			sendMsg(curState);
-
-        			if (d_triggerDelay == d_cycleDelay) {
-        				// our trigger is our cycle, just want a close then open
-        				curState = true;
-        				sendMsg(curState);
-        			}
-    			}
-    		}
-
-    		usleep(1000); // 1 ms sleep
-    	}
-
-    	triggerThreadRunning = false;
+	// clean up
+	if (initialDelayThread) {
+		delete initialDelayThread;
+		initialDelayThread = NULL;
 	}
 
-	void StateTimer_impl::runCycleThread() {
-    	cycleThreadRunning = true;
-
-    	std::chrono::time_point<std::chrono::steady_clock> curTimestamp;
-		std::chrono::duration<double> elapsed_seconds;
-
-    	// Cycle start is coordinated in runTriggerThread initially so they're in sync.
-
-    	// cycleStartTime = std::chrono::steady_clock::now();
-
-		while (!stopThreads) {
-    		curTimestamp = std::chrono::steady_clock::now();
-    		elapsed_seconds = curTimestamp-cycleStartTime;
-
-    		// we get to the end of a cycle.
-    		if (elapsed_seconds.count() >= (double)d_cycleDelay) {
-
-		        gr::thread::scoped_lock lock(d_mutex);
-
-    			if (!curState) {
-    				// If we've transitioned down, we can start the next cycle.
-        			curState = true;
-        			sendMsg(curState);
-        			triggerStartTime = curTimestamp;
-        			cycleStartTime = curTimestamp;
-    			}
-    		}
-
-    		usleep(1000); // 1 ms sleep
-    	}
-
-    	cycleThreadRunning = false;
+	if (cycleThread) {
+		delete cycleThread;
+		cycleThread = NULL;
 	}
 
-    int
-    StateTimer_impl::work(int noutput_items,
-        gr_vector_const_void_star &input_items,
-        gr_vector_void_star &output_items)
-    {
-      // <+OTYPE+> *out = (<+OTYPE+> *) output_items[0];
+	if (triggerThread) {
+		delete triggerThread;
+		triggerThread = NULL;
+	}
 
-      // Do <+signal processing+>
+	return true;
+}
 
-      // Tell runtime system how many output items we produced.
-      return noutput_items;
-    }
+/*
+ * Our virtual destructor.
+ */
+StateTimer_impl::~StateTimer_impl()
+{
+	bool retVal = stop();
+}
 
-  } /* namespace filerepeater */
+void StateTimer_impl::sendMsg(bool state) {
+	int newState;
+	if (state) {
+		newState = 1;
+	}
+	else {
+		newState = 0;
+	}
+
+	pmt::pmt_t pdu = pmt::cons( pmt::intern("state"), pmt::from_long(newState) );
+	message_port_pub(pmt::mp("trigger"),pdu);
+}
+
+void StateTimer_impl::runInitialThread() {
+	initialThreadRunning = true;
+
+	std::chrono::time_point<std::chrono::steady_clock> curTimestamp = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsed_seconds = curTimestamp-blockStartTime;
+
+	while (!stopThreads && elapsed_seconds.count() < (double)d_initialDelay) {
+		usleep(1000); // 1 ms sleep
+		curTimestamp = std::chrono::steady_clock::now();
+		elapsed_seconds = curTimestamp-blockStartTime;
+	}
+
+	initialThreadRunning = false;
+
+	if (!stopThreads) {
+		StartThreads();
+	}
+}
+
+void StateTimer_impl::runTriggerThread() {
+	triggerThreadRunning = true;
+
+	std::chrono::time_point<std::chrono::steady_clock> curTimestamp;
+	std::chrono::duration<double> elapsed_seconds;
+
+	triggerStartTime = std::chrono::steady_clock::now();
+	cycleStartTime = triggerStartTime;
+
+	// Send the initial high
+	curState = true;
+	sendMsg(curState);
+
+	while (!stopThreads) {
+		curTimestamp = std::chrono::steady_clock::now();
+		elapsed_seconds = curTimestamp-triggerStartTime;
+
+		// If we're past the end of a trigger cycle and we were high
+		if (elapsed_seconds.count() >= (double)d_triggerDelay) {
+			gr::thread::scoped_lock lock(d_mutex);
+			if (curState) {
+				curState = false;
+				sendMsg(curState);
+
+				if (d_triggerDelay == d_cycleDelay) {
+					// our trigger is our cycle, just want a close then open
+					curState = true;
+					sendMsg(curState);
+				}
+			}
+		}
+
+		usleep(1000); // 1 ms sleep
+	}
+
+	triggerThreadRunning = false;
+}
+
+void StateTimer_impl::runCycleThread() {
+	cycleThreadRunning = true;
+
+	std::chrono::time_point<std::chrono::steady_clock> curTimestamp;
+	std::chrono::duration<double> elapsed_seconds;
+
+	// Cycle start is coordinated in runTriggerThread initially so they're in sync.
+
+	// cycleStartTime = std::chrono::steady_clock::now();
+
+	while (!stopThreads) {
+		curTimestamp = std::chrono::steady_clock::now();
+		elapsed_seconds = curTimestamp-cycleStartTime;
+
+		// we get to the end of a cycle.
+		if (elapsed_seconds.count() >= (double)d_cycleDelay) {
+
+			gr::thread::scoped_lock lock(d_mutex);
+
+			if (!curState) {
+				// If we've transitioned down, we can start the next cycle.
+				curState = true;
+				sendMsg(curState);
+				triggerStartTime = curTimestamp;
+				cycleStartTime = curTimestamp;
+			}
+		}
+
+		usleep(1000); // 1 ms sleep
+	}
+
+	cycleThreadRunning = false;
+}
+
+int
+StateTimer_impl::work(int noutput_items,
+		gr_vector_const_void_star &input_items,
+		gr_vector_void_star &output_items)
+{
+	// <+OTYPE+> *out = (<+OTYPE+> *) output_items[0];
+
+	// Do <+signal processing+>
+
+	// Tell runtime system how many output items we produced.
+	return noutput_items;
+}
+
+} /* namespace filerepeater */
 } /* namespace gr */
 

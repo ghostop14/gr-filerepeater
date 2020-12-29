@@ -703,7 +703,7 @@ namespace gr {
        * class. filerepeater::AdvFileSink::make is the public interface for
        * creating new instances.
        */
-      static sptr make(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, float sampleRate,
+      static sptr make(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, double sampleRate,
     		  	  	  long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample,
 					  bool bUnbuffered, bool honorFreqTags);
 

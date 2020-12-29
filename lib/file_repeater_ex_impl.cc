@@ -18,10 +18,6 @@
  * Boston, MA 02110-1301, USA.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <gnuradio/io_signature.h>
 #include "file_repeater_ex_impl.h"
 
@@ -53,11 +49,23 @@
 namespace gr {
   namespace filerepeater {
 
-  file_repeater_ex::sptr file_repeater_ex::make(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec,
-		  	  	  	  	  	  	  bool repeat, int repeat_delay,int repeat_times, bool verbose)
+  file_repeater_ex::sptr file_repeater_ex::make(size_t itemsize,
+                                                const char* filename,
+                                                int complex_conv,
+                                                float delayFirstStartSec,
+                                                bool repeat,
+                                                int repeat_delay,
+                                                int repeat_times,
+                                                bool verbose)
   {
-    return gnuradio::get_initial_sptr
-      (new file_repeater_ex_impl(itemsize, filename, complex_conv, delayFirstStartSec, repeat, repeat_delay,repeat_times,verbose));
+      return gnuradio::make_block_sptr<file_repeater_ex_impl>(itemsize,
+                                                              filename,
+                                                              complex_conv,
+                                                              delayFirstStartSec,
+                                                              repeat,
+                                                              repeat_delay,
+                                                              repeat_times,
+                                                              verbose);
   }
 
 file_repeater_ex_impl::file_repeater_ex_impl(size_t itemsize, const char *filename, int complex_conv, float delayFirstStartSec,

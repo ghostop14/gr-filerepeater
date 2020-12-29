@@ -675,10 +675,6 @@
  * <http://www.gnu.org/philosophy/why-not-lgpl.html>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <gnuradio/io_signature.h>
 #include "AdvFileSink_impl.h"
 
@@ -692,7 +688,7 @@
 #include <boost/filesystem/path.hpp>
 
 // Things we need for the WAV file
-#include <gnuradio/blocks/wavfile.h>
+#include "wavfile.h"
 #include <boost/math/special_functions/round.hpp>
 
 // win32 (mingw/msvc) specific
@@ -715,20 +711,41 @@
 namespace gr {
   namespace filerepeater {
 
-    AdvFileSink::sptr
-    AdvFileSink::make(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, float sampleRate,
-    		long maxSize, long maxTimeSec, bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample,
-			bool bUnbuffered,bool honorFreqTags)
-    {
-      return gnuradio::get_initial_sptr
-        (new AdvFileSink_impl(datatype, itemsize, basedir, basefile, freq, sampleRate, maxSize, maxTimeSec,startRecordingImmediately,
-        		freqCallback, autostartFreqChange, bits_per_sample, bUnbuffered, honorFreqTags));
-    }
+  AdvFileSink::sptr AdvFileSink::make(int datatype,
+                                      int itemsize,
+                                      const char* basedir,
+                                      const char* basefile,
+                                      double freq,
+                                      double sampleRate,
+                                      long maxSize,
+                                      long maxTimeSec,
+                                      bool startRecordingImmediately,
+                                      bool freqCallback,
+                                      bool autostartFreqChange,
+                                      int bits_per_sample,
+                                      bool bUnbuffered,
+                                      bool honorFreqTags)
+  {
+      return gnuradio::make_block_sptr<AdvFileSink_impl>(datatype,
+                                                         itemsize,
+                                                         basedir,
+                                                         basefile,
+                                                         freq,
+                                                         sampleRate,
+                                                         maxSize,
+                                                         maxTimeSec,
+                                                         startRecordingImmediately,
+                                                         freqCallback,
+                                                         autostartFreqChange,
+                                                         bits_per_sample,
+                                                         bUnbuffered,
+                                                         honorFreqTags);
+  }
 
     /*
      * The private constructor
      */
-    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, float sampleRate, long maxSize, long maxTimeSec,
+    AdvFileSink_impl::AdvFileSink_impl(int datatype, int itemsize, const char *basedir, const char *basefile, double freq, double sampleRate, long maxSize, long maxTimeSec,
     		bool startRecordingImmediately, bool freqCallback, bool autostartFreqChange, int bits_per_sample, bool bUnbuffered,bool honorFreqTags)
       : gr::sync_block("AdvFileSink",
               gr::io_signature::make(0, 1, itemsize),
@@ -1004,7 +1021,7 @@ namespace gr {
 
       if (d_datatype == AFS_DATATYPE_WAV) {
     	  // If we have a WAV file, we have to add the WAV header
-          if(!gr::blocks::wavheader_write(d_fp,(unsigned)d_sampleRate,d_nchans, d_bytes_per_sample)) {
+          if(!wavheader_write(d_fp,(unsigned)d_sampleRate,d_nchans, d_bytes_per_sample)) {
     	        throw std::runtime_error ("[Advanced File Sink] can't write wav file header.");
           }
       }
@@ -1029,7 +1046,7 @@ namespace gr {
     			// If we have a WAV file we have to finish the header now.
     		      unsigned int byte_count = d_sample_count * d_bytes_per_sample;
 
-    		      gr::blocks::wavheader_complete(d_fp, byte_count);
+    		      wavheader_complete(d_fp, byte_count);
     		}
 
     		fclose(d_fp);
@@ -1152,7 +1169,7 @@ namespace gr {
 					sample_buf_s = 0;
 				  }
 
-				  gr::blocks::wav_write_sample(d_fp, sample_buf_s, d_bytes_per_sample);
+				  wav_write_sample(d_fp, sample_buf_s, d_bytes_per_sample);
 
 				  if(feof(d_fp) || ferror(d_fp)) {
 					fprintf(stderr, "[%s] file i/o error\n", __FILE__);
@@ -1273,7 +1290,7 @@ namespace gr {
 					sample_buf_s = 0;
 				  }
 
-				  gr::blocks::wav_write_sample(d_fp, sample_buf_s, d_bytes_per_sample);
+				  wav_write_sample(d_fp, sample_buf_s, d_bytes_per_sample);
 
 				  if(feof(d_fp) || ferror(d_fp)) {
 					fprintf(stderr, "[%s] file i/o error\n", __FILE__);

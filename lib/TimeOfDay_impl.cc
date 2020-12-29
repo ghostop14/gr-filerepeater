@@ -683,202 +683,201 @@
 #include "TimeOfDay_impl.h"
 
 namespace gr {
-  namespace filerepeater {
+namespace filerepeater {
 
-    TimeOfDay::sptr
-    TimeOfDay::make(int hours,int minutes, int seconds, float time_in_sec)
-    {
-      return gnuradio::get_initial_sptr
-        (new TimeOfDay_impl(hours,minutes,seconds, time_in_sec));
-    }
+TimeOfDay::sptr TimeOfDay::make(int hours, int minutes, int seconds, float time_in_sec)
+{
+	return gnuradio::make_block_sptr<TimeOfDay_impl>(
+			hours, minutes, seconds, time_in_sec);
+}
 
-    /*
-     * The private constructor
-     */
-    TimeOfDay_impl::TimeOfDay_impl(int hours,int minutes, int seconds, float time_in_sec)
-      : gr::sync_block("TimeOfDay",
-              gr::io_signature::make(0, 0, 0),
-              gr::io_signature::make(0, 0, sizeof(float)))
-    {
-    	d_startInitialized = false;
-    	stopThreads = false;
-    	triggerThreadRunning = false;
-    	d_triggerDelay = time_in_sec;
+/*
+ * The private constructor
+ */
+TimeOfDay_impl::TimeOfDay_impl(int hours,int minutes, int seconds, float time_in_sec)
+: gr::sync_block("TimeOfDay",
+		gr::io_signature::make(0, 0, 0),
+		gr::io_signature::make(0, 0, sizeof(float)))
+{
+	d_startInitialized = false;
+	stopThreads = false;
+	triggerThreadRunning = false;
+	d_triggerDelay = time_in_sec;
 
-    	d_hours = hours;
-    	d_minutes = minutes;
-    	d_seconds = seconds;
+	d_hours = hours;
+	d_minutes = minutes;
+	d_seconds = seconds;
 
-    	curState = false;
+	curState = false;
 
-        message_port_register_out(pmt::mp("trigger"));
+	message_port_register_out(pmt::mp("trigger"));
 
-        int hour,min,sec;
-        getCurrentTime(hour,min,sec);
+	int hour,min,sec;
+	getCurrentTime(hour,min,sec);
 
-		// std::cout << "[Time of Day] Current Time: " << hour << ":"<< min << ":" << sec << std::endl;
-        StartThreads();
-    }
+	// std::cout << "[Time of Day] Current Time: " << hour << ":"<< min << ":" << sec << std::endl;
+	StartThreads();
+}
 
-	void TimeOfDay_impl::getCurrentTime(int& hour, int& minute, int& second) {
-        time_t     now;
-        now = time(NULL);
-		struct tm *ts;
-		ts = localtime(&now);
+void TimeOfDay_impl::getCurrentTime(int& hour, int& minute, int& second) {
+	time_t     now;
+	now = time(NULL);
+	struct tm *ts;
+	ts = localtime(&now);
 
-		hour = ts->tm_hour;
-		minute = ts->tm_min;
-		second = ts->tm_sec;
+	hour = ts->tm_hour;
+	minute = ts->tm_min;
+	second = ts->tm_sec;
+}
+
+void TimeOfDay_impl::StartThreads(void) {
+	triggerThread = new boost::thread(boost::bind(&TimeOfDay_impl::runTriggerThread, this));
+}
+
+bool TimeOfDay_impl::stop() {
+	// Signal stop
+	stopThreads = true;
+
+	// Wait for all threads to terminate
+	while (triggerThreadRunning) {
+		usleep(1000); // sleep 1 millisec
 	}
 
-    void TimeOfDay_impl::StartThreads(void) {
-    	triggerThread = new boost::thread(boost::bind(&TimeOfDay_impl::runTriggerThread, this));
-    }
+	// clean up
+	if (triggerThread) {
+		delete triggerThread;
+		triggerThread = NULL;
+	}
 
-    bool TimeOfDay_impl::stop() {
-    	// Signal stop
-		stopThreads = true;
+	return true;
+}
 
-		// Wait for all threads to terminate
-		while (triggerThreadRunning) {
-			usleep(1000); // sleep 1 millisec
-		}
+/*
+ * Our virtual destructor.
+ */
+TimeOfDay_impl::~TimeOfDay_impl()
+{
+	bool retVal = stop();
+}
 
-		// clean up
-		if (triggerThread) {
-			delete triggerThread;
-			triggerThread = NULL;
-		}
+void TimeOfDay_impl::sendMsg(bool state) {
+	int newState;
+	if (state) {
+		newState = 1;
+	}
+	else {
+		newState = 0;
+	}
 
+	pmt::pmt_t pdu = pmt::cons( pmt::intern("state"), pmt::from_long(newState) );
+	message_port_pub(pmt::mp("trigger"),pdu);
+}
+
+bool TimeOfDay_impl::timeLessThanOrEqual(int hour1,int minute1, int second1, int hour2, int minute2, int second2) {
+	// Returns time1 <= time2
+
+	if (hour1 < hour2)
 		return true;
-    }
 
-    /*
-     * Our virtual destructor.
-     */
-    TimeOfDay_impl::~TimeOfDay_impl()
-    {
-    	bool retVal = stop();
-    }
+	if (hour1 == hour2) {
+		if (minute1 < minute2)
+			return true;
+		else {
+			if (minute1 == minute2) {
+				if (second1 <= second2)
+					return true;
+			}
+		}
+	}
 
-    void TimeOfDay_impl::sendMsg(bool state) {
-        int newState;
-        if (state) {
-            newState = 1;
-        }
-        else {
-            newState = 0;
-        }
+	return false;
+}
 
-        pmt::pmt_t pdu = pmt::cons( pmt::intern("state"), pmt::from_long(newState) );
-		message_port_pub(pmt::mp("trigger"),pdu);
-    }
+bool TimeOfDay_impl::timeGreaterOrEqual(int hour1,int minute1, int second1, int hour2, int minute2, int second2) {
+	// Returns time1 >= time2
 
-    bool TimeOfDay_impl::timeLessThanOrEqual(int hour1,int minute1, int second1, int hour2, int minute2, int second2) {
-    	// Returns time1 <= time2
+	if (hour1 > hour2)
+		return true;
 
-    	if (hour1 < hour2)
-    		return true;
+	if (hour1 == hour2) {
+		if (minute1 > minute2)
+			return true;
+		else {
+			if (minute1 == minute2) {
+				if (second1 >= second2)
+					return true;
+			}
+		}
+	}
 
-    	if (hour1 == hour2) {
-    		if (minute1 < minute2)
-    			return true;
-    		else {
-    			if (minute1 == minute2) {
-    				if (second1 <= second2)
-    					return true;
-    			}
-    		}
-    	}
+	return false;
+}
 
-    	return false;
-    }
+void TimeOfDay_impl::runTriggerThread() {
+	triggerThreadRunning = true;
 
-    bool TimeOfDay_impl::timeGreaterOrEqual(int hour1,int minute1, int second1, int hour2, int minute2, int second2) {
-    	// Returns time1 >= time2
+	// Give everything a chance to start up.
+	usleep(1000); // 1 ms sleep
 
-    	if (hour1 > hour2)
-    		return true;
+	bool newState = false;
+	int hours,minutes,seconds;
+	int prev_hour, prev_minute, prev_sec;
+	getCurrentTime(prev_hour,prev_minute,prev_sec);
 
-    	if (hour1 == hour2) {
-    		if (minute1 > minute2)
-    			return true;
-    		else {
-    			if (minute1 == minute2) {
-    				if (second1 >= second2)
-    					return true;
-    			}
-    		}
-    	}
-
-    	return false;
-    }
-
-	void TimeOfDay_impl::runTriggerThread() {
-    	triggerThreadRunning = true;
-
-    	// Give everything a chance to start up.
-		usleep(1000); // 1 ms sleep
-
-		bool newState = false;
-		int hours,minutes,seconds;
-		int prev_hour, prev_minute, prev_sec;
-		getCurrentTime(prev_hour,prev_minute,prev_sec);
-
-    	while (!stopThreads) {
-    		getCurrentTime(hours,minutes,seconds);
-    		// if the previous time was <= trigger time and the now >= trigger time, trigger
-    		bool lessThan = timeLessThanOrEqual(prev_hour,prev_minute,prev_sec,d_hours,d_minutes, d_seconds);
-    		bool greaterThan = timeGreaterOrEqual(hours,minutes,seconds,d_hours,d_minutes, d_seconds);
-    		if (lessThan &&	greaterThan && (!curState)) {
-    			/*
+	while (!stopThreads) {
+		getCurrentTime(hours,minutes,seconds);
+		// if the previous time was <= trigger time and the now >= trigger time, trigger
+		bool lessThan = timeLessThanOrEqual(prev_hour,prev_minute,prev_sec,d_hours,d_minutes, d_seconds);
+		bool greaterThan = timeGreaterOrEqual(hours,minutes,seconds,d_hours,d_minutes, d_seconds);
+		if (lessThan &&	greaterThan && (!curState)) {
+			/*
     			std::cout << "Prev Time: " << prev_hour << ":" << prev_minute << ":" << prev_sec << std::endl;
     			std::cout << "Current Time: " << hours << ":" << minutes << ":" << seconds << std::endl;
     			std::cout << "Less Than: " << lessThan << " greaterThan: " << greaterThan << std::endl;
-    			*/
-    			curState = true;
-    			triggerStartTime = std::chrono::steady_clock::now();
-    			d_startInitialized = true;
-    			sendMsg(curState);
-    		}
-    		else {
-    			// Check if our timer has expired.
-    			if (d_startInitialized) {
-    				// Have to have been initialized at least once.
-    				std::chrono::time_point<std::chrono::steady_clock> curTimestamp = std::chrono::steady_clock::now();
-    				std::chrono::duration<double> elapsed_seconds = curTimestamp-triggerStartTime;
-    	    		if (elapsed_seconds.count() >= (double)d_triggerDelay) {
-    			        gr::thread::scoped_lock lock(d_mutex);
-    	    			if (curState) {
-    	        			curState = false;
-    	        			sendMsg(curState);
-    	    			}
-    	    		}
-    			}
-    		}
+			 */
+			curState = true;
+			triggerStartTime = std::chrono::steady_clock::now();
+			d_startInitialized = true;
+			sendMsg(curState);
+		}
+		else {
+			// Check if our timer has expired.
+			if (d_startInitialized) {
+				// Have to have been initialized at least once.
+				std::chrono::time_point<std::chrono::steady_clock> curTimestamp = std::chrono::steady_clock::now();
+				std::chrono::duration<double> elapsed_seconds = curTimestamp-triggerStartTime;
+				if (elapsed_seconds.count() >= (double)d_triggerDelay) {
+					gr::thread::scoped_lock lock(d_mutex);
+					if (curState) {
+						curState = false;
+						sendMsg(curState);
+					}
+				}
+			}
+		}
 
-    		// set times for next check
-			prev_hour = hours;
-			prev_minute = minutes;
-			prev_sec = seconds;
+		// set times for next check
+		prev_hour = hours;
+		prev_minute = minutes;
+		prev_sec = seconds;
 
-    		usleep(10000); // 10 ms sleep
-    	}
-
-    	triggerThreadRunning = false;
+		usleep(10000); // 10 ms sleep
 	}
 
-	int
-    TimeOfDay_impl::work(int noutput_items,
-        gr_vector_const_void_star &input_items,
-        gr_vector_void_star &output_items)
-    {
-      // Do <+signal processing+>
+	triggerThreadRunning = false;
+}
 
-      // Tell runtime system how many output items we produced.
-      return noutput_items;
-    }
+int
+TimeOfDay_impl::work(int noutput_items,
+		gr_vector_const_void_star &input_items,
+		gr_vector_void_star &output_items)
+{
+	// Do <+signal processing+>
 
-  } /* namespace filerepeater */
+	// Tell runtime system how many output items we produced.
+	return noutput_items;
+}
+
+} /* namespace filerepeater */
 } /* namespace gr */
 
