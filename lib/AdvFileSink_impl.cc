@@ -1204,8 +1204,6 @@ namespace gr {
         gr_vector_const_void_star &input_items,
         gr_vector_void_star &output_items)
     {
-        gr::thread::scoped_lock guard(d_mutex);	// hold mutex for duration of this function
-
         if(!d_fp) {
         	if (d_currentState) {
 	    		// We're recording, but the 'new' file hasn't been opened yet.  Open it here.
