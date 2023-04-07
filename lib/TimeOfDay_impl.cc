@@ -731,7 +731,7 @@ void TimeOfDay_impl::getCurrentTime(int& hour, int& minute, int& second) {
 }
 
 void TimeOfDay_impl::StartThreads(void) {
-	triggerThread = new boost::thread(boost::bind(&TimeOfDay_impl::runTriggerThread, this));
+	triggerThread = new std::thread([this]{ TimeOfDay_impl::runTriggerThread(); });
 }
 
 bool TimeOfDay_impl::stop() {

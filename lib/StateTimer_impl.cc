@@ -731,15 +731,16 @@ StateTimer_impl::StateTimer_impl(float delayBeforeStart, float triggerTime, floa
 	else {
 		triggerThread = NULL;
 		cycleThread = NULL;
-		initialDelayThread = new boost::thread(boost::bind(&StateTimer_impl::runInitialThread, this));
+		initialDelayThread = new std::thread([this]{ StateTimer_impl::runInitialThread(); });
 	}
 }
 
 void StateTimer_impl::StartThreads(void) {
-	triggerThread = new boost::thread(boost::bind(&StateTimer_impl::runTriggerThread, this));
+	triggerThread = new std::thread([this]{ StateTimer_impl::runTriggerThread(); });
 
 	if (d_triggerDelay < d_cycleDelay)
-		cycleThread = new boost::thread(boost::bind(&StateTimer_impl::runCycleThread, this));
+		cycleThread = new std::thread([this]{ 
+StateTimer_impl::runCycleThread(); });
 }
 
 bool StateTimer_impl::stop() {

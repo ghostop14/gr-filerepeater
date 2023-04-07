@@ -681,6 +681,7 @@
 #include <filerepeater/AdvFileSink.h>
 #include <chrono>
 #include <ctime>
+#include <gnuradio/thread/thread.h>
 
 using namespace std;
 
@@ -734,7 +735,7 @@ namespace gr {
       	int d_nchans;
         unsigned d_sample_count;
 
-        boost::mutex d_mutex;
+        gr::thread::mutex d_mutex;
 
         FILE *d_fp = NULL;
     	std::chrono::time_point<std::chrono::steady_clock> start;

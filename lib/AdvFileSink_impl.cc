@@ -684,12 +684,11 @@
 #include <fcntl.h>
 
 // Make sure output directory exists
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
+#include <filesystem>
 
 // Things we need for the WAV file
 #include "wavfile.h"
-#include <boost/math/special_functions/round.hpp>
+#include <cmath>
 
 // win32 (mingw/msvc) specific
 #ifdef HAVE_IO_H
@@ -836,7 +835,7 @@ namespace gr {
         }
 
         // Check if directory exists:
-        bool dirExists = boost::filesystem::is_directory(d_baseDir);
+        bool dirExists = std::filesystem::is_directory(d_baseDir);
 		if (!dirExists)
 	        throw std::runtime_error ("[Advanced File Sink] ERROR - specified output directory does not exist.");
 
@@ -1067,7 +1066,7 @@ namespace gr {
 	sample = d_min_sample_val;
       }
 
-      return (short int)boost::math::iround(sample);
+      return (short int)std::lround(sample);
     }
 
 

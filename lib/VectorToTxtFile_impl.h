@@ -681,6 +681,7 @@
 #include <filerepeater/VectorToTxtFile.h>
 #include <chrono>
 #include <ctime>
+#include <gnuradio/thread/thread.h>
 
 using namespace std;
 
@@ -703,7 +704,7 @@ namespace gr {
    	 	std::chrono::time_point<std::chrono::steady_clock> lastUpdateTime;
    	 	std::chrono::time_point<std::chrono::steady_clock> startTime;
 
-        boost::mutex d_mutex;
+        gr::thread::mutex d_mutex;
         FILE *d_fp = NULL;
 
     	virtual bool open();

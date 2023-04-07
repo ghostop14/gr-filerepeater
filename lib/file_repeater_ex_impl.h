@@ -24,6 +24,7 @@
 #include <filerepeater/file_repeater_ex.h>
 #include <chrono>
 #include <ctime>
+#include <gnuradio/thread/thread.h>
 
 #define DTYPE_COMPLEX 1
 #define DTYPE_FLOAT 2
@@ -58,11 +59,11 @@ namespace gr {
         bool convData;
         char *convBuffer;
         int iMaxItems;
-        boost::mutex fp_mutex;
+        gr::thread::mutex fp_mutex;
         int d_dataType;
 
         int cur_repeat_cycle=0;
-        boost::posix_time::ptime stopped_transmitting;
+        std::chrono::time_point<std::chrono::steady_clock> stopped_transmitting;
         bool holdingTransmit=false;
 
         bool workDone;

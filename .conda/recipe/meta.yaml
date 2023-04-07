@@ -36,7 +36,6 @@ requirements:
     # Add extra build tool dependencies here
 
   host:
-    - boost-cpp
     - gmp  # [linux]
     # the following two entries are for generating builds against specific GR versions
     - gnuradio-core  # [not gnuradio_extra_pin]
@@ -49,7 +48,6 @@ requirements:
     # Add/remove library dependencies here
 
   run:
-    - boost-cpp
     - numpy
     - python
     # Add/remove runtime dependencies here

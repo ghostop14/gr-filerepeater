@@ -261,10 +261,10 @@ bool file_repeater_ex_impl::stop() {
 
     // check if we're in a hold-down delay between file repeats.  If so return 0's.
     if (holdingTransmit) {
-        boost::posix_time::ptime tnow = boost::posix_time::second_clock::local_time();
-        boost::posix_time::time_duration diff = tnow - stopped_transmitting;
+        auto tnow = std::chrono::steady_clock::now();
+        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(tnow - stopped_transmitting);
 
-        if (diff.total_milliseconds() <= d_repeat_delay) {
+        if (diff.count() <= d_repeat_delay) {
             // I'm holding the transmit and my timeout hasn't expired yet.
         	memset((void *)o,0x00,d_itemsize*noutput_items);
             return noutput_items;
@@ -360,7 +360,7 @@ bool file_repeater_ex_impl::stop() {
         // 3. We're back at the beginning of the file, so see if we need a repeat delay.
 
         if (d_repeat_delay > 0) {
-            stopped_transmitting = boost::posix_time::second_clock::local_time();
+            stopped_transmitting = std::chrono::steady_clock::now();
             holdingTransmit = true;
         	return 0; // let the loop read pick up on next call.
         }

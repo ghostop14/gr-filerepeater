@@ -681,6 +681,8 @@
 #include <filerepeater/TimeOfDay.h>
 #include <chrono>
 #include <ctime>
+#include <thread>
+#include <gnuradio/thread/thread.h>
 
 namespace gr {
   namespace filerepeater {
@@ -688,7 +690,7 @@ namespace gr {
     class TimeOfDay_impl : public TimeOfDay
     {
      private:
-        boost::mutex d_mutex;
+    	gr::thread::mutex d_mutex;
     	bool d_startInitialized;
     	float d_triggerDelay;
 
@@ -699,7 +701,7 @@ namespace gr {
         bool curState;
 
     	std::chrono::time_point<std::chrono::steady_clock> triggerStartTime;
-		boost::thread *triggerThread;
+		std::thread *triggerThread;
 		bool stopThreads;
 		bool triggerThreadRunning;
 		void runTriggerThread();
