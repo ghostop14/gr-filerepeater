@@ -749,7 +749,7 @@ bool StateTimer_impl::stop() {
 
 	// Wait for all threads to terminate
 	while (cycleThreadRunning || triggerThreadRunning || initialThreadRunning) {
-		usleep(1000); // sleep 1 millisec
+		std::this_thread::sleep_for(std::chrono::milliseconds(1)); // sleep 1 millisec
 	}
 
 	// clean up
@@ -799,7 +799,7 @@ void StateTimer_impl::runInitialThread() {
 	std::chrono::duration<double> elapsed_seconds = curTimestamp-blockStartTime;
 
 	while (!stopThreads && elapsed_seconds.count() < (double)d_initialDelay) {
-		usleep(1000); // 1 ms sleep
+		std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 1 ms sleep
 		curTimestamp = std::chrono::steady_clock::now();
 		elapsed_seconds = curTimestamp-blockStartTime;
 	}
@@ -843,7 +843,7 @@ void StateTimer_impl::runTriggerThread() {
 			}
 		}
 
-		usleep(1000); // 1 ms sleep
+		std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 1 ms sleep
 	}
 
 	triggerThreadRunning = false;
@@ -877,7 +877,7 @@ void StateTimer_impl::runCycleThread() {
 			}
 		}
 
-		usleep(1000); // 1 ms sleep
+		std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 1 ms sleep
 	}
 
 	cycleThreadRunning = false;
