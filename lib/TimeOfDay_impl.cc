@@ -731,7 +731,7 @@ void TimeOfDay_impl::getCurrentTime(int& hour, int& minute, int& second) {
 }
 
 void TimeOfDay_impl::StartThreads(void) {
-	triggerThread = new boost::thread(boost::bind(&TimeOfDay_impl::runTriggerThread, this));
+	triggerThread = new std::thread([this]{ TimeOfDay_impl::runTriggerThread(); });
 }
 
 bool TimeOfDay_impl::stop() {
@@ -740,7 +740,7 @@ bool TimeOfDay_impl::stop() {
 
 	// Wait for all threads to terminate
 	while (triggerThreadRunning) {
-		usleep(1000); // sleep 1 millisec
+		std::this_thread::sleep_for(std::chrono::milliseconds(1)); // sleep 1 millisec
 	}
 
 	// clean up
@@ -817,7 +817,7 @@ void TimeOfDay_impl::runTriggerThread() {
 	triggerThreadRunning = true;
 
 	// Give everything a chance to start up.
-	usleep(1000); // 1 ms sleep
+	std::this_thread::sleep_for(std::chrono::milliseconds(1)); // 1 ms sleep
 
 	bool newState = false;
 	int hours,minutes,seconds;
@@ -861,7 +861,7 @@ void TimeOfDay_impl::runTriggerThread() {
 		prev_minute = minutes;
 		prev_sec = seconds;
 
-		usleep(10000); // 10 ms sleep
+		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // 10 ms sleep
 	}
 
 	triggerThreadRunning = false;

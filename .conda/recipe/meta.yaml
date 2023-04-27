@@ -1,0 +1,104 @@
+{% set oot_name = "filerepeater" %}
+{% set name = "gnuradio-" + oot_name %}
+# Set package version from cleaned up git tags if possible,
+# otherwise fall back to date-based version.
+{% set tag_version = environ.get("GIT_DESCRIBE_TAG", "")|string|replace("-","_")|replace("v","")|replace("git","") %}
+{% set post_commit = environ.get("GIT_DESCRIBE_NUMBER", 0)|string %}
+{% set hash = environ.get("GIT_DESCRIBE_HASH", "local")|string %}
+{% set fallback_version = "0.0.0.{0}.dev+g{1}".format(datetime.datetime.now().strftime("%Y%m%d"), environ.get("GIT_FULL_HASH", "local")[:9]) %}
+{% set version = (tag_version if post_commit == "0" else "{0}.post{1}+{2}".format(tag_version, post_commit, hash)) if tag_version else fallback_version %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  # use local path or git repository depending on if the build is local or done on CI
+  path: "../.."  # [not os.environ.get("CI")]
+  git_url: {{ environ.get('FEEDSTOCK_ROOT', "../..") }}  # [os.environ.get("CI")]
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - {{ compiler("c") }}
+    - {{ compiler("cxx") }}
+    - cmake
+    - git
+    - ninja
+    - pkg-config
+    # cross-compilation requirements
+    - python                              # [build_platform != target_platform]
+    - cross-python_{{ target_platform }}  # [build_platform != target_platform]
+    - numpy                               # [build_platform != target_platform]
+    - pybind11                            # [build_platform != target_platform]
+    # Add extra build tool dependencies here
+
+  host:
+    - gmp  # [linux]
+    # the following two entries are for generating builds against specific GR versions
+    - gnuradio-core  # [not gnuradio_extra_pin]
+    - gnuradio-core {{ gnuradio_extra_pin }}.*  # [gnuradio_extra_pin]
+    - pip  # [win]
+    - pybind11
+    - python
+    - numpy
+    - spdlog
+    # Add/remove library dependencies here
+
+  run:
+    - numpy
+    - python
+    # Add/remove runtime dependencies here
+
+test:
+  commands:
+    # verify that (some) headers get installed
+    - test -f $PREFIX/include/{{ oot_name }}/api.h  # [not win]
+    - if not exist %PREFIX%\\Library\\include\\{{ oot_name }}\\api.h exit 1  # [win]
+
+    # verify that libraries get installed
+    - test -f $PREFIX/lib/lib{{ name }}${SHLIB_EXT}  # [not win]
+    - if not exist %PREFIX%\\Library\\bin\\{{ name }}.dll exit 1  # [win]
+    - if not exist %PREFIX%\\Library\\lib\\{{ name }}.lib exit 1  # [win]
+
+    # verify that (some) GRC blocks get installed
+    {% set blocks = ["AdvFileSink", "TimeOfDay", "file_repeater_ex", "msg_to_file"] %}
+    {% for block in blocks %}
+    - test -f $PREFIX/share/gnuradio/grc/blocks/{{ oot_name }}_{{ block }}.block.yml  # [not win]
+    - if not exist %PREFIX%\\Library\\share\\gnuradio\\grc\\blocks\\{{ oot_name }}_{{ block }}.block.yml exit 1  # [win]
+    {% endfor %}
+
+  imports:
+    # verify that the python module imports
+    - {{ oot_name }}
+
+about:
+  home: https://github.com/ghostop14/gr-filerepeater
+  license: GPL-3.0-or-later
+  license_file: LICENSE
+  summary: GNU Radio block to play back files with delays between replays and/or limited replay counts
+  description: >
+    A set of GNU Radio blocks with more control over how files are played.
+
+    Shows in widgets now as [Advanced File] Group Advanced File Source: Files
+    can be started with an initial delay before starting to output data (output
+    0's until the timer is hit), played with delays in between (output 0's in
+    between), or played once then output zero's rather than just returning no
+    samples. The block can also directly play signed8/HackRF and
+    unsigned8/RTL-SDR saved IQ data and dynamically convert it to native
+    complex.
+
+    The delay capabilities can all be useful if you're trying to combine
+    multiple sample files into a single larger signal with different intervals
+    or trying to do blind signal analysis and decoding where the standard file
+    source repeat option causes signal discontinuities when it restarts.
+
+    Flow Input Synchronizer: If you play two file sources (even if you create
+    two file source blocks but assign the same file to each), the data point
+    flows will not be point-synchronized. The Flow Input Synchronizer is a sync
+    block that just puts all inputs and outputs in step. In other words if you
+    plotted the same file from two different file sources on a frequency sink
+    using this block, the plots would now overlap/align whereas they do not
+    without it.

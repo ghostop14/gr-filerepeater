@@ -681,6 +681,8 @@
 #include <filerepeater/StateTimer.h>
 #include <chrono>
 #include <ctime>
+#include <thread>
+#include <gnuradio/thread/thread.h>
 
 namespace gr {
   namespace filerepeater {
@@ -688,7 +690,7 @@ namespace gr {
     class StateTimer_impl : public StateTimer
     {
      protected:
-        boost::mutex d_mutex;
+        gr::thread::mutex d_mutex;
 
         bool curState;
 
@@ -699,9 +701,9 @@ namespace gr {
     	float d_cycleDelay;
 
 		std::chrono::time_point<std::chrono::steady_clock> blockStartTime,triggerStartTime,cycleStartTime;
-		boost::thread *triggerThread;
-		boost::thread *cycleThread;
-		boost::thread *initialDelayThread;
+		std::thread *triggerThread;
+		std::thread *cycleThread;
+		std::thread *initialDelayThread;
 
 		bool stopThreads;
 		bool triggerThreadRunning;
