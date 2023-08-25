@@ -45,7 +45,7 @@ if(NOT filerepeater_sources)
 endif(NOT filerepeater_sources)
 
 add_library(gnuradio-filerepeater SHARED ${filerepeater_sources})
-target_link_libraries(gnuradio-filerepeater gnuradio::gnuradio-runtime gnuradio-blocks)
+target_link_libraries(gnuradio-filerepeater gnuradio::gnuradio-runtime gnuradio-blocks boost_filesystem)
 target_include_directories(gnuradio-filerepeater
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
     PUBLIC $<INSTALL_INTERFACE:include>
