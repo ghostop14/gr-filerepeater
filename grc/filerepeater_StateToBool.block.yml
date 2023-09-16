@@ -4,6 +4,13 @@ id: filerepeater_StateToBool
 label: State Msg To Bool
 category: '[Advanced File]'
 
+parameters:
+-   id: invert
+    label: Invert Output
+    dtype: enum
+    options: ['False', 'True']
+    option_labels: ['No', 'Yes']
+
 inputs:
 -   domain: message
     id: state
@@ -14,7 +21,7 @@ outputs:
 
 templates:
     imports: import filerepeater
-    make: filerepeater.StateToBool()
+    make: filerepeater.StateToBool(${invert})
 
 documentation: |-
     This block converts a 'state' metadata item to a pmt bool that is compatible with other blocks such as mute.
